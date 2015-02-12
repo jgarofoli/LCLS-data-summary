@@ -24,6 +24,7 @@ class job(object):
         self.shared = {}
         self.output = []
         self.output_dir = None
+        self._output_dir_base = os.path.expanduser('~/data-summary')
         self.gathered_output = []
         self.previous_versions = []
         self.x_axes = ['time',]
@@ -32,6 +33,20 @@ class job(object):
         self.logger.info('start time is {:}'.format(self.start_time))
         self.eventN = 0
         return
+
+    @property
+    def baseoutputdir(self):
+        return self._output_dir_base
+
+    @baseoutputdir.setter
+    def baseoutputdir(self,value):
+        self._output_dir_base = value
+        return
+
+    @baseoutputdir.getter
+    def baseoutputdir(self):
+        return self._output_dir_base
+
 
     def smart_rename(self,out):
         if out == './':
@@ -62,10 +77,10 @@ class job(object):
         if len(args) == 1:
             self.output_dir = args[0]
         if not os.path.isdir(self.output_dir) and self.rank==0:
-            os.mkdir(self.output_dir)
+            os.makedirs(self.output_dir)
         elif os.path.isdir(self.output_dir) and self.rank==0:
             self.smart_rename(self.output_dir)
-            os.mkdir(self.output_dir)
+            os.makedirs(self.output_dir)
         self.logger.info('waiting for rank 0 to set up directories..')
         outdir = self.comm.bcast(self.output_dir,root=0) # block and wait for rank0 to finish the directory stuff
         self.logger.info('waiting for rank 0 to set up directories..done')
@@ -110,7 +125,7 @@ class job(object):
         self.exp = exp
         self.run = run
         instr, thisexp = exp.split('/')
-        self.set_outputdir(os.path.join( os.path.abspath('.') ,'{:}_run{:0.0f}'.format(thisexp,run)))
+        self.set_outputdir(os.path.join( self.baseoutputdir ,'{:}_run{:0.0f}'.format(thisexp,run)))
 
         self.logger.info('connecting to data source')
         self.ds = psana.DataSource('exp={:}:run={:0.0f}:idx'.format(exp,run))
