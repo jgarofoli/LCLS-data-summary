@@ -1,9 +1,19 @@
 import markup
 from markup import oneliner as e
-import os
+import os, sys
 import shutil
 
-html_ref_dir = "../html/"
+
+html_ref_dir = os.path.abspath( 
+        os.path.join( 
+            os.path.dirname( 
+                os.path.abspath( 
+                    unicode( __file__ , sys.getfilesystemencoding() ) 
+                    ) 
+                ),
+            "../html/"
+            )
+        )
 
 class report:
     def __init__(self,*args,**kwargs):

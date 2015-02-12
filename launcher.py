@@ -4,6 +4,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot
 import jutils
 import data_summary
+import os
 
 # just some comment
 
@@ -27,6 +28,9 @@ ps.add_argument("--verbose", '-v', action='count', default=4, dest="verbosity",
 ps.add_argument("--xkcd", "-x", action="store_true", default=False, dest="xkcd",
         help="use XKCD plot sytle")
 
+ps.add_argument("--base-output-dir", "-O", default=os.path.expanduser('~/data-summary/'), dest="baseoutputdir",
+        help="set output folder for reports")
+
 args = ps.parse_args()
 
 verbosity_levels = ["CRITICAL","ERROR","WARNING","INFO","DEBUG"]
@@ -39,6 +43,7 @@ if args.xkcd:
 
 myMPIrunner = data_summary.job()
 
+myMPIrunner.baseoutputdir = args.baseoutputdir
 myMPIrunner.set_datasource(exp=args.exp,run=args.run)
 myMPIrunner.set_maxEventsPerNode(args.max_events)
 myMPIrunner.set_x_axes(args.x_axes)
