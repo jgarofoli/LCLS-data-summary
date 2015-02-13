@@ -1,9 +1,10 @@
 import logging
 
 from job import *
-from event_process import *
+#from event_process import *
+#from event_process_lib import *
 from output_html import *
-from event_process_lib import *
+from evplib import *
 from device_config import *
 
 logger = logging.getLogger('data_summary')
