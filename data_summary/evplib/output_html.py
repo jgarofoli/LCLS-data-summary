@@ -11,7 +11,7 @@ html_ref_dir = os.path.abspath(
                     unicode( __file__ , sys.getfilesystemencoding() ) 
                     ) 
                 ),
-            "../html/"
+            "../../html/"
             )
         )
 
