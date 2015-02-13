@@ -16,32 +16,8 @@ Make a few ready made data processing tools.  Mostly not used anymore.
 ## device_config.py and device_config.dict
 
 Imported from Jason's psdata utility.  Defines relations between PVs and DAQ devices.
-Would be nice to get rid of it.
+Would be nice to move away from this.
 
-## event_process.py
+## evplib/
 
-Bare bones event_process object.
-
-## event_process_lib.py
-
-Some fleshed out event_process objects.
-
-## markup.py
-
-Library written by nogradi.  See
-http://markup.sourceforge.net
-Used by output_html.py.
-
-## output_html.py
-
-Generates the report html file.
-
-## toolbox.py
-
-A small library of data types for the subjobs.
-
-## packunpack.py
-
-Library to convert unhashable native objects (dicts, lists) to hashable tuples
-in a reversible manner.  Provides the forward (pack) and reverse (unpack)
-algorithms.
+Library of code for handling specific detectors data.
