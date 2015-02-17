@@ -71,26 +71,35 @@ class offbyone(event_process.event_process):
         return
 
     def endJob(self):
-        self.offByOne = False
-        for det in iter(self.results):
-            chisqmin = sys.float_info.max
-            index = 0 # default to "success", i.e. not off-by-one
-            for i in range(-self.shotrange,self.shotrange+1):
-                val = self.chisq(det,i)
-                if val<chisqmin:
-                    chisqmin=val
-                    index = i
-            if index==0: continue    # min chisq when we exclude 0, so we're OK
-            if chisqmin>10: continue # to avoid false positives, require that these shots look statistically consistent
-            csq = self.chisq(det,99999)   # min chisq not at 0! compute chisq with all points to see if we have a significant deviation
-            if csq>5:
-                print det,'off by',index,'with chisq',csq
-                self.offByOne = True
+        self.gathered_results = self.parent.comm.gather( self.results , root=self.reducer_rank )
         if self.parent.rank == self.reducer_rank:
+            self.merged_results = dict( self.gathered_results[0] )
+            for dd in self.gathered_results[1:]:
+                for k in dd:
+                    if k in self.merged_results:
+                        self.merged_results[k].extend( dd[k] )
+                    else :
+                        self.merged_results[k] = list( dd[k] )
+            # merge together the gathered_results
+            self.offByOne = False
+            for det in iter(self.merged_results):
+                chisqmin = sys.float_info.max
+                index = 0 # default to "success", i.e. not off-by-one
+                for i in range(-self.shotrange,self.shotrange+1):
+                    val = self.chisq(det,i)
+                    if val<chisqmin:
+                        chisqmin=val
+                        index = i
+                if index==0: continue    # min chisq when we exclude 0, so we're OK
+                if chisqmin>10: continue # to avoid false positives, require that these shots look statistically consistent
+                csq = self.chisq(det,99999)   # min chisq not at 0! compute chisq with all points to see if we have a significant deviation
+                if csq>5:
+                    print det,'off by',index,'with chisq',csq
+                    self.offByOne = True
             self.parent.output.append(self.output)
             self.output['table'] = {}
             self.output['figures'] = {}
-            self.plot(self.results)
+            self.plot(self.merged_results)
             self.output['text'].append( '<p>Off by One: {:}</p>'.format(self.offByOne) )
         return
 
