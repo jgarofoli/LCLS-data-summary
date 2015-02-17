@@ -24,6 +24,9 @@ Library to convert unhashable native objects (dicts, lists) to hashable tuples
 in a reversible manner.  Provides the forward (pack) and reverse (unpack)
 algorithms.
 
+## offbyone.py
+
+Chris O'Grady's algorithm for testing if data packages have been built correctly.
 
 ## acqiris.py
 
@@ -88,4 +91,5 @@ TBD
 ## time_fiducials.py
 
 TBD
+
 

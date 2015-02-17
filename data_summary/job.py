@@ -2,11 +2,10 @@ from mpi4py import MPI
 import logging
 import os
 import sys
-import output_html
 import psana
 import time
 import math
-import packunpack as pup
+import evplib.packunpack as pup
 import hashlib
 
 __version__ = 0.2
@@ -202,26 +201,26 @@ class job(object):
         for sj in self.subjobs:
             sj.beginJob()
 
-        for run in self.ds.runs():
-            times = run.times()
+        for self.thisrun in self.ds.runs():
+            times = self.thisrun.times()
             if self.rank == 0:
                 self.all_times.extend(times)
             mylength = int(math.ceil(float(len(times))/self.size))
             if mylength > self.maxEventsPerNode:
                 mylength = self.maxEventsPerNode
-            mytimes = times[self.rank*mylength:(self.rank+1)*mylength]
+            self.mytimes = times[self.rank*mylength:(self.rank+1)*mylength]
 
-            if mylength > len(mytimes):
-                mylength = len(mytimes)
+            if mylength > len(self.mytimes):
+                mylength = len(self.mytimes)
 
             for sj in self.subjobs:
                 sj.beginRun()
                 
             for ii in xrange(mylength):
-                self.evt = run.event(mytimes[ii])
+                self.evt = self.thisrun.event(self.mytimes[ii])
                 self.eventN = ii
                 if self.evt is None:
-                    self.logger.ERROR( "**** event fetch failed ({:}) : rank {:}".format(mytimes[ii],self.rank) )
+                    self.logger.ERROR( "**** event fetch failed ({:}) : rank {:}".format(self.mytimes[ii],self.rank) )
                     continue
 
                 for sj in self.subjobs:
