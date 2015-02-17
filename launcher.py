@@ -55,6 +55,7 @@ myMPIrunner.set_x_axes(args.x_axes)
 myMPIrunner.add_event_process( data_summary.counter()                       )
 myMPIrunner.add_event_process( data_summary.evr()                           )
 myMPIrunner.add_event_process( data_summary.time_fiducials()                )
+myMPIrunner.add_event_process( data_summary.offbyone()                      )
 myMPIrunner.add_event_process( data_summary.add_available_data()            )
 
 myMPIrunner.add_event_process( data_summary.add_elog()                      )
