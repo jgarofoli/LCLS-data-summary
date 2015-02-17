@@ -86,11 +86,12 @@ class offbyone(event_process.event_process):
             if csq>5:
                 print det,'off by',index,'with chisq',csq
                 self.offByOne = True
-        self.output['table'] = {}
-        self.output['figures'] = {}
-        self.plot(self.results)
-        self.output['text'].append( '<p>Off by One: {:}</p>'.format(self.offByOne) )
-        self.parent.output.append(self.output)
+        if self.parent.rank == self.reducer_rank:
+            self.parent.output.append(self.output)
+            self.output['table'] = {}
+            self.output['figures'] = {}
+            self.plot(self.results)
+            self.output['text'].append( '<p>Off by One: {:}</p>'.format(self.offByOne) )
         return
 
     def plot(self,results):
