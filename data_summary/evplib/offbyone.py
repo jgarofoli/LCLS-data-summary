@@ -6,6 +6,7 @@ import matplotlib
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
 import math
+import pylab
 
 def array_calc(arr):
     flat = np.ravel(arr)
@@ -77,9 +78,12 @@ class offbyone(event_process.event_process):
             for dd in self.gathered_results[1:]:
                 for k in dd:
                     if k in self.merged_results:
-                        self.merged_results[k].extend( dd[k] )
+                        for ii in dd[k]:
+                            if ii not in self.merged_results[k]:
+                                self.merged_results[k][ii] = []
+                            self.merged_results[k][ii].extend( dd[k][ii] )
                     else :
-                        self.merged_results[k] = list( dd[k] )
+                        self.merged_results[k] = dict( dd[k] )
             # merge together the gathered_results
             self.offByOne = False
             for det in iter(self.merged_results):
@@ -94,7 +98,8 @@ class offbyone(event_process.event_process):
                 if chisqmin>10: continue # to avoid false positives, require that these shots look statistically consistent
                 csq = self.chisq(det,99999)   # min chisq not at 0! compute chisq with all points to see if we have a significant deviation
                 if csq>5:
-                    print det,'off by',index,'with chisq',csq
+                    self.logger.info( repr(det)+' off by '+repr(index)+' with chisq '+repr(csq) )
+                    self.output['text'].append( '<p>'+repr(det)+' off by '+repr(index)+' with chisq '+repr(csq)+'</p>' )
                     self.offByOne = True
             self.parent.output.append(self.output)
             self.output['table'] = {}
@@ -119,10 +124,11 @@ class offbyone(event_process.event_process):
                 for eventoffset in iter(results[det]):
                     y = results[det][eventoffset]
                     x = [eventoffset]*len(y)
-                    plt.plot(x,y,'ro')
+                    plt.plot(x,y,'ko',alpha=0.4)
                 if subplotnum==8 or i==len(results.keys())-1:
                     pdf.savefig()
                     pylab.savefig( os.path.join( self.parent.output_dir, 'figure_offbyone_{:}.png'.format( totalfigs ) ) )
+                    self.output['figures'][totalfigs] = {}
                     self.output['figures'][totalfigs]['png'] = os.path.join( self.parent.output_dir, 'figure_offbyone_{:}.png'.format( totalfigs ) )
                     totalfigs += 1
                     #plt.show()
