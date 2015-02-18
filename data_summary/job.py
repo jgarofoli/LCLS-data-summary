@@ -199,7 +199,10 @@ class job(object):
 
 
         for sj in self.subjobs:
-            sj.beginJob()
+            try:
+                sj.beginJob()
+            except Exception as e:
+                self.logger.error('some error at beginJob step!! {:}'.format(e) )
 
         for self.thisrun in self.ds.runs():
             times = self.thisrun.times()
@@ -214,7 +217,10 @@ class job(object):
                 mylength = len(self.mytimes)
 
             for sj in self.subjobs:
-                sj.beginRun()
+                try: 
+                    sj.beginRun()
+                except Exception as e:
+                    self.logger.error('some error at beginRun step!! {:}'.format(e) )
                 
             for ii in xrange(mylength):
                 self.evt = self.thisrun.event(self.mytimes[ii])
@@ -224,10 +230,16 @@ class job(object):
                     continue
 
                 for sj in self.subjobs:
-                    sj.event(self.evt)
+                    try:
+                        sj.event(self.evt)
+                    except Exception as e:
+                        self.logger.error('some error at event step!! {:}'.format(e) )
 
             for sj in self.subjobs:
-                sj.endRun()
+                try:
+                    sj.endRun()
+                except Exception as e:
+                    self.logger.error('some error at endRun step!! {:}'.format(e) )
 
         self.logger.info( "rank {:} finishing".format( self.rank ) )
         self.cputotal = time.time() - self.cpustart
@@ -236,7 +248,10 @@ class job(object):
         self.subjobs[5:-1] = sorted(self.subjobs[5:-1]) # sort all jobs except first and last
         self.unify_ranks()
         for sj in self.subjobs:
-            sj.endJob()
+            try:
+                sj.endJob()
+            except Exception as e:
+                self.logger.error('some error at endJob step!! {:}'.format(e) )
 
         #logger_flush()
         for hdlr in self.logger.__dict__['handlers']: # this is a bad way to do this...
