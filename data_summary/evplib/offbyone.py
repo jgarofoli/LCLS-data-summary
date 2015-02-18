@@ -75,7 +75,7 @@ class offbyone(event_process.event_process):
         self.gathered_results = self.parent.comm.gather( self.results , root=self.reducer_rank )
         if self.parent.rank == self.reducer_rank:
             self.merged_results = dict( self.gathered_results[0] )
-            for dd in self.gathered_results[1:]:
+            for dd in self.gathered_results[1:]: # this needs to be better/more robust
                 for k in dd:
                     if k in self.merged_results:
                         for ii in dd[k]:
