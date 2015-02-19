@@ -2,6 +2,7 @@ import markup
 from markup import oneliner as e
 import os, sys
 import shutil
+import logging
 
 
 html_ref_dir = os.path.abspath( 
@@ -17,18 +18,24 @@ html_ref_dir = os.path.abspath(
 
 class report:
     def __init__(self,*args,**kwargs):
+        self.output_file = 'report.html'
+        self.logger = logging.getLogger(__name__+'.output_html')
+
         self.output_dir = kwargs.get('output_dir','./')
+        self.logger.info('output directory is '+self.output_dir)
         if 'output_dir' in kwargs:
             del kwargs['output_dir']
         cssdir =  os.path.join( self.output_dir, 'css')
         jsdir  =  os.path.join( self.output_dir, 'js')
         if not os.path.isdir( self.output_dir ):
+            self.logger.info('output directory doesn"t exit, making it.')
             os.mkdir( self.output_dir )
         if not os.path.isdir( cssdir ):
             os.mkdir( cssdir )
         if not os.path.isdir( jsdir ):
             os.mkdir( jsdir )
 
+        self.logger.info('copying files...')
         shutil.copy( os.path.join( html_ref_dir, 'css', 'bootstrap.min.css' ), os.path.join( cssdir) )
         shutil.copy( os.path.join( html_ref_dir, 'mine.css' ), os.path.join( cssdir) )
         shutil.copy( os.path.join( html_ref_dir, 'jumbotron-narrow.css' ), self.output_dir  )
@@ -36,9 +43,11 @@ class report:
         shutil.copy( os.path.join( html_ref_dir, 'jquery.min.js' ), os.path.join(jsdir) )
         shutil.copy( os.path.join( html_ref_dir, 'toggler.js' ), os.path.join(jsdir) )
         shutil.copy( os.path.join( html_ref_dir, 'sticky.js' ), os.path.join(jsdir) )
+        self.logger.info('copying files... done.')
 
         self.sections = []
 
+        self.logger.info('instantiating html page object')
         self.page = markup.page()
         self.page.twotags.append('nav')
         self.page.init(**kwargs)
@@ -56,6 +65,8 @@ class report:
         self.page.div.close()
         # footer here?
         self.page.div.close()
+        self.logger.info('finishing html page')
+        self.logger.info('output file is '+os.path.join(self.output_dir,self.output_file))
 
 
     def _build_header(self,*args):
@@ -140,7 +151,7 @@ class report:
 
     def myprint(self,tofile=False):
         if tofile:
-            outfile = open( os.path.join( self.output_dir, 'report.html' ), 'w' )
+            outfile = open( os.path.join( self.output_dir, self.output_file ), 'w' )
             outfile.write(self.page(escape=False))
             outfile.close()
         else:
