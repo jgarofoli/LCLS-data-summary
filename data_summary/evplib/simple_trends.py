@@ -9,7 +9,7 @@ from common import strtype
 
 class simple_trends(event_process.event_process):
     def __init__(self):
-        self.output = {}
+        self.output = event_process.event_process_output()
         self.reducer_rank = 0
         self.logger = logging.getLogger(__name__+'.simple_trends')
         return
@@ -52,8 +52,6 @@ class simple_trends(event_process.event_process):
             self.reduced_trends[attr] = self.trends[attr].reduce(self.parent.comm,self.reducer_rank)
 
         if self.parent.rank == self.reducer_rank:
-            self.output['figures'] = {}
-            self.output['table'] = {}
             fig = pylab.figure()
             for attr in self.dev_attrs:
                 self.output['figures'][attr] = {}

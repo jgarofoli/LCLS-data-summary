@@ -10,7 +10,7 @@ from common import strtype
 class acqiris(event_process.event_process):
     def __init__(self):
         self.data = {}
-        self.output = {}
+        self.output = event_process.event_process_output()
         self.logger = logging.getLogger(__name__+'.acqiris')
         return
 
@@ -53,8 +53,6 @@ class acqiris(event_process.event_process):
 
 
         if self.parent.rank == self.reducer_rank:
-            self.output['table'] = {}
-            self.output['figures'] = {}
             fig = pylab.figure()
             for evr in sorted(self.reduced_data):
                 fig.clear()

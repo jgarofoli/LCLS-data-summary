@@ -23,13 +23,11 @@ def find_time(time):
 
 class offbyone(event_process.event_process):
     def __init__(self):
-        self.output = {}
+        self.output = event_process.event_process_output()
         self.reducer_rank = 0
         self.logger = logging.getLogger(__name__+'.offbyone')
         self.results = {}
         self.shotrange = 4
-        self.output                      = {}
-        self.output['text']              = []
         self.output['in_report']         = 'analysis'
         self.output['in_report_title']   = 'Off By One'
         return
