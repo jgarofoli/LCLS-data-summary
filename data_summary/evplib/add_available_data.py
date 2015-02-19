@@ -4,7 +4,7 @@ import logging
 
 class add_available_data(event_process.event_process):
     def __init__(self):
-        self.output = {}
+        self.output = event_process.event_process_output()
         self.reducer_rank = 0
         self.event_keys = []
         self.config_keys = []
@@ -29,8 +29,8 @@ class add_available_data(event_process.event_process):
     def endJob(self):
         self.gathered_all_events_keys = self.parent.comm.gather( self.all_events_keys, root=self.reducer_rank )
         if self.parent.rank == self.reducer_rank:
-            self.output = {'in_report': 'meta', 'in_report_title':'Available Data Sources'}
-            self.output['text'] = []
+            self.output['in_report'] =  'meta'
+            self.output['in_report_title'] = 'Available Data Sources'
             self.output['text'].append('Event Keys:<br/>\n<pre>' + pprint.pformat( self.event_keys )  + '</pre>')
             self.output['text'].append('Config Keys:<br/>\n<pre>' + pprint.pformat( self.config_keys )  + '</pre>')
             self.merged_all_events_keys = {}

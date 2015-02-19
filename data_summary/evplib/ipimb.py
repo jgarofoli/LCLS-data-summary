@@ -9,7 +9,7 @@ from common import strtype
 
 class ipimb(event_process.event_process):
     def __init__(self):
-        self.output = {}
+        self.output = event_process.event_process_output()
         self.reducer_rank = 0
         self.logger = logging.getLogger(__name__+'.ipimb')
 
@@ -67,9 +67,6 @@ class ipimb(event_process.event_process):
             self.reduced_trends[chan] = self.trends[chan].reduce(self.parent.comm,self.reducer_rank)
 
         if self.parent.rank == self.reducer_rank:
-            self.output['figures']   = {}
-            self.output['table']     = {}
-            self.output['text']      = []
             self.output['text'].append('PVs trended below the fold: <br/>\n<pre>')
             for chan in self.trends:
                 self.output['text'][-1] += chan+'\n'
