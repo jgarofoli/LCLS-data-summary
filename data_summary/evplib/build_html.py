@@ -7,7 +7,7 @@ import markup
 
 class build_html(event_process.event_process):
     def __init__(self):
-        self.output = {}
+        self.output = event_process.event_process_output()
         self.reducer_rank = 0
         self.logger = logging.getLogger(__name__+'.build_html')
         self.logger.info(__name__)
@@ -73,6 +73,7 @@ class build_html(event_process.event_process):
                                                                                                                         #
         for thisep in sorted(gathered):                                                                                #
             if thisep['in_report'] == 'meta':                                                                     #
+                self.logger.info( 'adding '+ repr(thisep)+ ' to meta section')
                 ep = thisep['in_report_title'].replace(' ','_')
                 self.html.start_subblock(thisep['in_report_title'],id=ep)                ################# a sub block #########    #
                 if 'text' in thisep:
@@ -97,6 +98,7 @@ class build_html(event_process.event_process):
                                                                                                                        #
         for thisep in sorted(gathered):                                                                                #
             if thisep['in_report'] == 'detectors':                                                                     #
+                self.logger.info( 'adding '+ repr(thisep)+ ' to detectors section')
                 ep = thisep['in_report_title'].replace(' ','_')
                 self.html.start_subblock(thisep['in_report_title'],id=ep)                ################# a sub block #########    #
                 if 'text' in thisep:
@@ -121,6 +123,7 @@ class build_html(event_process.event_process):
         self.html.start_block('Analysis', id='analysis')
         for thisep in sorted(gathered):                                                                                #
             if thisep['in_report'] == 'analysis':                                                                     #
+                self.logger.info( 'adding '+ repr(thisep)+ ' to analysis section')
                 ep = thisep['in_report_title'].replace(' ','_')
                 self.html.start_subblock(thisep['in_report_title'],id=ep)                ################# a sub block #########    #
                 if 'text' in thisep:
@@ -142,6 +145,7 @@ class build_html(event_process.event_process):
                                                                                                                        #
         self.html.end_block()                                      #####################################################
 
+        self.logger.info('done adding results')
         self.html.start_block('Logging', id='logging')   ######################################## a block #############
         self.html.page.p('link to LSF log file.')                                                                     #
         logs = ','.join(['<a href="log_{0:}.log">log {0:}</a> '.format(x) for x in xrange(self.parent.size) ])
@@ -167,6 +171,7 @@ class build_html(event_process.event_process):
                                                                                                                  #    #
             self.html.end_subblock()                                   ###########################################    #
         self.html.end_block()                            ##############################################################
+        self.logger.info('done adding past analysis runs')
 
         # this closes the left column
         self.html.page.div.close()
