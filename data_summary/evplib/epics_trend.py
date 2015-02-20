@@ -8,7 +8,7 @@ import os
 class epics_trend(event_process.event_process):
     def __init__(self):
         self.logger                      = logging.getLogger(__name__+'.epics_trend')
-        self.output                      = {}
+        self.output = event_process.event_process_output()
         self.reducer_rank                = 0
         self.period_window               = 1.
         self.channels_to_trend           = []
@@ -57,9 +57,6 @@ class epics_trend(event_process.event_process):
             self.reduced_trends[chan] = self.trends[chan].reduce(self.parent.comm,self.reducer_rank)
 
         if self.parent.rank == self.reducer_rank:
-            self.output['figures']   = {}
-            self.output['table']     = {}
-            self.output['text']      = []
             self.output['text'].append('All available PVs in the EPICS store: <select><option>--</option>\n')
             for chan in self.allPvs:
                 self.output['text'][-1] += '<option>{:}</option>\n'.format(chan)
