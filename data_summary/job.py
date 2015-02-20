@@ -68,8 +68,9 @@ class job(object):
         self.output_dir = self.output_dir+'.{:02.0f}'.format(ii)
         self.logger.info('setting output dir to {:}'.format(self.output_dir))
         os.makedirs(self.output_dir)
-        os.unlink( self.output_dir_orig ) # remove the previous symlink
-        os.symlink( self.output_dir, self.output_dir_orig) # make a new symlink
+        if os.path.exists( self.output_dir_orig + '.latest' ):
+            os.unlink( self.output_dir_orig + '.latest' ) # remove the previous symlink
+        os.symlink( self.output_dir, self.output_dir_orig + '.latest') # make a new symlink
         return
                      
     def set_outputdir(self,*args):
