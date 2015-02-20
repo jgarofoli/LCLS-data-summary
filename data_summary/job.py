@@ -54,32 +54,29 @@ class job(object):
             out = out[:-1]
         ii = 0
         while True:
-            if not os.path.isdir(out+'.{:02.0f}'.format(ii)):
-                os.rename(out,out+'.{:02.0f}'.format(ii))
-                self.previous_versions.append( [out+'.{:02.0f}'.format(ii),] )
-                if os.path.isdir(out+'.{:02.0f}'.format(ii)) and os.path.isfile( out+'.{:02.0f}'.format(ii) +'/report.html'):
-                    self.previous_versions[-1].append( time.ctime( os.path.getctime(  out+'.{:02.0f}'.format(ii) +'/report.html' ) ) )
-                else: 
-                    self.previous_versions[-1].append( None )
-                break
-            else:
+            self.logger.info('checking if ({:}) exists ({:})'.format( out+'.{:02.0f}'.format(ii),os.path.isdir(out+'.{:02.0f}'.format(ii))))
+            if os.path.isdir(out+'.{:02.0f}'.format(ii)):
                 self.previous_versions.append( [out+'.{:02.0f}'.format(ii),] )
                 if os.path.isdir(out+'.{:02.0f}'.format(ii)) and os.path.isfile( out+'.{:02.0f}'.format(ii) +'/report.html'):
                     self.previous_versions[-1].append( time.ctime( os.path.getctime(  out+'.{:02.0f}'.format(ii) +'/report.html' ) ) )
                 else: 
                     self.previous_versions[-1].append( None )
                 ii += 1
-                continue
+            else : 
+                break
+        self.output_dir_orig = self.output_dir
+        self.output_dir = self.output_dir+'.{:02.0f}'.format(ii)
+        self.logger.info('setting output dir to {:}'.format(self.output_dir))
+        os.makedirs(self.output_dir)
+        os.unlink( self.output_dir_orig ) # remove the previous symlink
+        os.symlink( self.output_dir, self.output_dir_orig) # make a new symlink
         return
                      
     def set_outputdir(self,*args):
         if len(args) == 1:
             self.output_dir = args[0]
-        if not os.path.isdir(self.output_dir) and self.rank==0:
-            os.makedirs(self.output_dir)
-        elif os.path.isdir(self.output_dir) and self.rank==0:
+        if self.rank==0:
             self.smart_rename(self.output_dir)
-            os.makedirs(self.output_dir)
         self.logger.info('waiting for rank 0 to set up directories..')
         outdir = self.comm.bcast(self.output_dir,root=0) # block and wait for rank0 to finish the directory stuff
         self.logger.info('waiting for rank 0 to set up directories..done')
