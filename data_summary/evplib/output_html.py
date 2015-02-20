@@ -172,7 +172,7 @@ def mk_table(dd):
         pg.tr()
         pg.td(kk)
         for jj in sorted(dd[kk]):
-            pg.td(dd[kk][jj])
+            pg.td( '{:0.4f}'.format(dd[kk][jj]))
         pg.tr.close()
     pg.table.close()
     return(pg)
