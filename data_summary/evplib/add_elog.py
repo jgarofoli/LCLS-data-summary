@@ -15,7 +15,8 @@ class add_elog(event_process.event_process):
 
     def endJob(self):
         if self.parent.rank == self.reducer_rank:
-            self.output = {'in_report': 'meta', 'in_report_title':'Elog'}
+            self.output['in_report']= 'meta'
+            self.output['in_report_title'] = 'Elog'
             self.output['text'] = ["<a href=https://pswww.slac.stanford.edu/apps/portal/index.php?exper_id={:0.0f}>Elog</a>".format(self.expNum),]
             self.parent.output.append(self.output)
         return

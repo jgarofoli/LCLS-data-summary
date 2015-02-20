@@ -13,7 +13,8 @@ class store_report_results(event_process.event_process):
     def endJob(self):
         self.parent.gather_output()
         if self.parent.rank == 0:
-            self.output = {'in_report': 'meta', 'in_report_title':'Report Results'}
+            self.output['in_report'] = 'meta'
+            self.output['in_report_title'] = 'Report Results'
             self.output['text'] = ["<a href=report.py>Report.py</a>",]
             self.parent.output.append(self.output)
             self.parent.gathered_output.append(self.output)

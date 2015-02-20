@@ -5,7 +5,7 @@ class epics_scatter(event_process.event_process):
         self.logger                      = logging.getLogger(__name__+'.epics_scatter')
         self.scatter_x_channel           = None
         self.scatter_y_channel           = None
-        self.output                      = {}
+        self.output = event_process.event_process_output()
         self.output['in_report']         = None
         self.output['in_report_title']   = None
 
