@@ -84,26 +84,34 @@ class offbyone(event_process.event_process):
                         self.merged_results[k] = dict( dd[k] )
             # merge together the gathered_results
             self.offByOne = False
+            self.output['table'] = {}
             for det in iter(self.merged_results):
+                self.output['table'][det] = {}
                 chisqmin = sys.float_info.max
                 index = 0 # default to "success", i.e. not off-by-one
                 for i in range(-self.shotrange,self.shotrange+1):
                     val = self.chisq(det,i)
+                    self.logger.info('{:} {:0.2f} {:}'.format(i,val,det))
                     if val<chisqmin:
                         chisqmin=val
                         index = i
+                self.output['table'][det]['index'] = index
+                self.output['table'][det]['chi2min'] = chisqmin
+                self.output['table'][det]['chi2'] = -1
+                self.output['table'][det]['offbyone'] = 0
                 if index==0: continue    # min chisq when we exclude 0, so we're OK
                 if chisqmin>10: continue # to avoid false positives, require that these shots look statistically consistent
                 csq = self.chisq(det,99999)   # min chisq not at 0! compute chisq with all points to see if we have a significant deviation
+                self.output['table'][det]['chi2'] = csq
                 if csq>5:
                     self.logger.info( repr(det)+' off by '+repr(index)+' with chisq '+repr(csq) )
                     self.output['text'].append( '<p>'+repr(det)+' off by '+repr(index)+' with chisq '+repr(csq)+'</p>' )
                     self.offByOne = True
-            self.parent.output.append(self.output)
-            self.output['table'] = {}
+                    self.output['table'][det]['offbyone'] = 1
             self.output['figures'] = {}
             self.plot(self.merged_results)
             self.output['text'].append( '<p>Off by One: {:}</p>'.format(self.offByOne) )
+            self.parent.output.append(self.output)
         return
 
     def plot(self,results):
@@ -138,14 +146,16 @@ class offbyone(event_process.event_process):
 
     def chisq(self,det,dropGuess,**kwargs):
         points = []
-        for eventoffset in iter(self.results[det]):
+        for eventoffset in iter(self.merged_results[det]):
             if eventoffset==dropGuess: continue
-            vals = self.results[det][eventoffset]
+            vals = self.merged_results[det][eventoffset]
+            self.logger.info('vals : '+repr(vals))
             if len(vals)<5: continue
             points.append([np.mean(vals),np.var(vals)/len(vals)])
         if len(points)>1:
             return self.chisquare(points,**kwargs)
         else:
+            self.logger.info(points)
             return sys.float_info.max
 
     def chisquare(self,points,**kwargs):
@@ -153,6 +163,5 @@ class offbyone(event_process.event_process):
         wtdMean = np.sum([v[0]/v[1] for v in points])*wtdMeanVar
         chisq = np.sum([(v[0]-wtdMean)**2/v[1] for v in points])
         dof = len(points)-1
-        if 'debug' in kwargs.keys():
-            print wtdMean,wtdMeanVar,points
+        self.logger.debug( "{:} {:} {:}".format( wtdMean,wtdMeanVar,points ) )
         return chisq/dof
