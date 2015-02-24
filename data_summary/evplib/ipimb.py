@@ -83,6 +83,8 @@ class ipimb(event_process.event_process):
                 pylab.plot(thisxs,thismaxs,'r')
                 pylab.plot(thisxs,thismins,'b')
                 pylab.title(chan)
+                pylab.xlabel('time [sec]')
+                pylab.ylabel('value [min/mean/max]')
                 pylab.savefig( os.path.join( self.parent.output_dir, 'figure_trend_{:}.png'.format(chan.replace(':','_')) ))
                 self.output['figures'][chan]['png'] = os.path.join( self.parent.output_dir, 'figure_trend_{:}.png'.format( chan.replace(':','_') ))
                 # finish this section

@@ -63,6 +63,8 @@ class simple_trends(event_process.event_process):
                 pylab.plot(thisxs,thismeans,'k')
                 pylab.plot(thisxs,thismaxs,'r')
                 pylab.plot(thisxs,thismins,'b')
+                pylab.xlabel('time [sec]')
+                pylab.ylabel('value [min/mean/max]')
                 pylab.title(attr)
                 pylab.savefig( os.path.join( self.parent.output_dir, 'figure_trend_{:}.png'.format(attr) ))
                 self.output['figures'][attr]['png'] = os.path.join( self.parent.output_dir, 'figure_trend_{:}.png'.format( attr ))

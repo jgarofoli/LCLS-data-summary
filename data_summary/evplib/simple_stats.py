@@ -60,6 +60,8 @@ class simple_stats(event_process.event_process):
                 newX, newY = self.reduced_histograms[attr].mksteps()
                 pylab.fill_between( newX, 0, newY[:-1] )
                 pylab.title( attr )
+                pylab.xlabel('value')
+                pylab.ylabel('count [per bin]')
                 pylab.xlim( self.histograms[attr].minrange, self.histograms[attr].maxrange )
                 pylab.ylim( 0 , max(self.reduced_histograms[attr].binentries)*1.1 )
                 pylab.savefig( os.path.join( self.parent.output_dir, 'figure_{:}.png'.format( attr ) ))
