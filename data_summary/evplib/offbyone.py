@@ -91,7 +91,7 @@ class offbyone(event_process.event_process):
                 index = 0 # default to "success", i.e. not off-by-one
                 for i in range(-self.shotrange,self.shotrange+1):
                     val = self.chisq(det,i)
-                    self.logger.info('{:} {:0.2f} {:}'.format(i,val,det))
+                    self.logger.debug('{:} {:0.2f} {:}'.format(i,val,det))
                     if val<chisqmin:
                         chisqmin=val
                         index = i
@@ -149,7 +149,7 @@ class offbyone(event_process.event_process):
         for eventoffset in iter(self.merged_results[det]):
             if eventoffset==dropGuess: continue
             vals = self.merged_results[det][eventoffset]
-            self.logger.info('vals : '+repr(vals))
+            self.logger.debug('vals : '+repr(vals))
             if len(vals)<5: continue
             points.append([np.mean(vals),np.var(vals)/len(vals)])
         if len(points)>1:
