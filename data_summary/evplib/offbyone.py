@@ -2,6 +2,7 @@ from psana import *
 import numpy as np
 import sys
 import event_process
+from mpi4py import MPI
 import matplotlib
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
@@ -28,8 +29,10 @@ class offbyone(event_process.event_process):
         self.logger = logging.getLogger(__name__+'.offbyone')
         self.results = {}
         self.shotrange = 4
+        self.mindroppedshots = 10 # number of data points to have to consider results "valid"
         self.output['in_report']         = 'analysis'
         self.output['in_report_title']   = 'Off By One'
+        self.count162 = 0
         return
 
     def off_by_one_process(self,evt,eventoffset,results):
@@ -62,6 +65,7 @@ class offbyone(event_process.event_process):
 
     def event(self, evt):
         if 162 in self.parent.shared['evr']:
+            self.count162 += 1
             for i in range(-self.shotrange,self.shotrange+1):
                 if self.parent.eventN+i<0 or self.parent.eventN+i>=len(self.parent.mytimes):
                     continue
@@ -69,20 +73,35 @@ class offbyone(event_process.event_process):
                 self.off_by_one_process(thisevt,i,self.results)
         return
 
+    def mergeresults(self, GR):
+        # get all the keys:
+        allkeys = []
+        MR = {}
+        for dd in GR:
+            allkeys.extend( dd.keys() )
+
+        for dd in GR:
+            for k in set(allkeys):
+                if k in MR :
+                    for ii in dd[k]:
+                        if ii not in MR[k]:
+                            MR[k][ii] = []
+                        MR[k][ii].extend( dd[k][ii] )
+                else :
+                    MR[k] = dict( dd[k] )
+        return MR
+
     def endJob(self):
+        self.logger.info( 'found {:} dropped shots'.format( self.count162 ) )
         self.gathered_results = self.parent.comm.gather( self.results , root=self.reducer_rank )
+        self.allcount162 = np.array([0])
+        self.parent.comm.Reduce( 
+                [np.array(self.count162), MPI.INT], 
+                [self.allcount162, MPI.INT],
+                op=MPI.SUM,root=self.reducer_rank)
         if self.parent.rank == self.reducer_rank:
-            self.merged_results = dict( self.gathered_results[0] )
-            for dd in self.gathered_results[1:]: # this needs to be better/more robust
-                for k in dd:
-                    if k in self.merged_results:
-                        for ii in dd[k]:
-                            if ii not in self.merged_results[k]:
-                                self.merged_results[k][ii] = []
-                            self.merged_results[k][ii].extend( dd[k][ii] )
-                    else :
-                        self.merged_results[k] = dict( dd[k] )
-            # merge together the gathered_results
+            self.logger.info('all dropped shots: {:}'.format( self.allcount162[0] ) )
+            self.merged_results = self.mergeresults( self.gathered_results )
             self.offByOne = False
             self.output['table'] = {}
             for det in iter(self.merged_results):
@@ -110,7 +129,10 @@ class offbyone(event_process.event_process):
                     self.output['table'][det]['offbyone'] = 1
             self.output['figures'] = {}
             self.plot(self.merged_results)
-            self.output['text'].append( '<p>Off by One: {:}</p>'.format(self.offByOne) )
+            if self.allcount162[0] > self.mindroppedshots :
+                self.output['text'].append( '<p>Off by One: <b>{:}</b><br/>Total dropped shots: {:0.0f}</p>'.format(self.offByOne,self.allcount162[0]) )
+            else:
+                self.output['text'].append( '<p>Off by One: N/A<br/>Total dropped shots: {:0.0f}</p>'.format(self.allcount162[0]) )
             self.parent.output.append(self.output)
         return
 
