@@ -7,6 +7,7 @@ import time
 import math
 import evplib.packunpack as pup
 import hashlib
+import pprint
 
 __version__ = 0.2
 
@@ -165,8 +166,9 @@ class job(object):
         subjob_data = [sj.describe_self() for sj in self.subjobs]
         self.logger.info('subjobs at end: {:}'.format(subjob_data))
 
-        #self.gathered_subjobs = self.comm.gather( pup.pack(subjob_data) , root=0 )
-        #if self.rank == 0:
+        self.gathered_subjobs = self.comm.gather( pup.pack(subjob_data) , root=0 )
+        if self.rank == 0:
+            self.logger.info('gathered subjobs: \n {:}'.format( pprint.pformat( self.gathered_subjobs) ) )
         #    self.scattered_subjobs = self.check_subjobs( self.gathered_subjobs[0] )
         #else:
         #    self.scattered_subjobs = None
@@ -249,7 +251,7 @@ class job(object):
         self.subjobs[5:-1] = sorted(self.subjobs[5:-1]) # sort all jobs except first and last
         self.unify_ranks()
         for sj in self.subjobs:
-            self.logger.info( 'rank {:} reducing subjob {:}'.format(self.rank, repr(sj) ) )
+            self.logger.info( 'rank {:} endJob {:}'.format(self.rank, repr(sj) ) )
             try:
                 sj.endJob()
             except Exception as e:
