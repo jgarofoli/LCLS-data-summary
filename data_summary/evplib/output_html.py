@@ -16,6 +16,16 @@ html_ref_dir = os.path.abspath(
             )
         )
 
+hutchcolor = {
+        'AMO': 'blue',
+        'CXI': 'red',
+        'MEC': 'goldenrod',
+        'SXR': 'black',
+        'XCS': 'purple',
+        'XPP': 'green',
+        }
+
+
 class report:
     def __init__(self,*args,**kwargs):
         self.output_file = 'report.html'
@@ -69,7 +79,7 @@ class report:
         self.logger.info('output file is '+os.path.join(self.output_dir,self.output_file))
 
 
-    def _build_header(self,*args):
+    def _build_header(self,*args,**kwargs):
         self.page.div(class_='header')
 
         self.page.nav(class_='navigation')
@@ -78,9 +88,11 @@ class report:
         self.page.li(e.a('Top',href='#top'),class_='active')
         self.page.ul.close()
         self.page.nav.close()
+        
+        hutch = args[0].split('/')[0]
 
-        self.page.h3('CXI Data Summary ' +e.small('{:}, Run {:0.0f}'.format(*args),style='font-family:monospace;')
-                ,class_='text-muted',style='color: red;')
+        self.page.h3('{:} Data Summary '.format(hutch) +e.small('{:}, Run {:0.0f}'.format(*args),style='font-family:monospace;')
+                ,class_='text-muted',style='color: {:};'.format( hutchcolor.get(hutch, 'gray') ))
 
         self.page.div.close()
 
