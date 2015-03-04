@@ -168,7 +168,12 @@ class job(object):
 
         self.gathered_subjobs = self.comm.gather( pup.pack(subjob_data) , root=0 )
         if self.rank == 0:
-            self.logger.info('gathered subjobs: \n {:}'.format( pprint.pformat( self.gathered_subjobs) ) )
+            tftable = [self.gathered_subjobs[0] == gsj for gsj in self.gathered_subjobs]
+            allgood =  not False in tftable
+            self.logger.info('all ranks have identical subjobs: {:}'.format(allgood  ))
+            self.logger.debug('gathered subjobs: \n {:}'.format( pprint.pformat( self.gathered_subjobs) ) )
+            if not allgood:
+                self.logger.error.info('subjobs matching to sj 0: {:}'.format(repr(tftable)))
         #    self.scattered_subjobs = self.check_subjobs( self.gathered_subjobs[0] )
         #else:
         #    self.scattered_subjobs = None
