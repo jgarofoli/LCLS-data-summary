@@ -83,10 +83,11 @@ class offbyone(event_process.event_process):
         for dd in GR:
             for k in set(allkeys):
                 if k in MR :
-                    for ii in dd[k]:
-                        if ii not in MR[k]:
-                            MR[k][ii] = []
-                        MR[k][ii].extend( dd[k][ii] )
+                    if k in dd:
+                        for ii in dd[k]:
+                            if ii not in MR[k]:
+                                MR[k][ii] = []
+                            MR[k][ii].extend( dd[k][ii] )
                 else :
                     MR[k] = dict( dd[k] )
         return MR
