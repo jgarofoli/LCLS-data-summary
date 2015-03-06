@@ -6,6 +6,7 @@ import event_process
 import pylab
 from mpi4py import MPI
 from common import strtype
+import pprint
 
 class cspad(event_process.event_process):
     def __init__(self):
@@ -31,7 +32,8 @@ class cspad(event_process.event_process):
 
     def set_stuff(self,psana_src,psana_device,in_report=None,in_report_title=None):
         self.src         = psana.Source(psana_src)
-        self.dev         = psana_device
+        #self.dev         = psana_device
+        self.dev         = psana.CsPad.DataV2
         self.output['in_report']         = in_report
         self.output['in_report_title']   = in_report_title
 
@@ -43,6 +45,9 @@ class cspad(event_process.event_process):
         return ('set_stuff',args,kwargs)
 
     def event(self,evt):
+        #self.logger.info(pprint.pformat(evt.keys()))
+        #self.logger.info('dev/type:'+repr(self.dev))
+        #self.logger.info('src:'+repr(self.src))
         cspad = evt.get(self.dev, self.src)
         a = []
         for i in range(0,4):
