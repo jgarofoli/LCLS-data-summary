@@ -31,6 +31,12 @@ ps.add_argument("--xkcd", "-x", action="store_true", default=False, dest="xkcd",
 ps.add_argument("--base-output-dir", "-O", default=os.path.expanduser('~/data-summary/'), dest="baseoutputdir",
         help="set output folder for reports")
 
+ps.add_argument("--cfgfile", "-C", default=None, dest="cfgfile",
+        help="set psana cfg file")
+
+ps.add_argument("--cspad-histos", default=False, dest="cspad_histos", action="store_true",
+        help="add cspad histgramming job")
+
 args = ps.parse_args()
 
 verbosity_levels = ["CRITICAL","ERROR","WARNING","INFO","DEBUG"]
@@ -44,7 +50,7 @@ if args.xkcd:
 myMPIrunner = data_summary.job()
 
 myMPIrunner.baseoutputdir = args.baseoutputdir
-myMPIrunner.set_datasource(exp=args.exp,run=args.run)
+myMPIrunner.set_datasource(exp=args.exp,run=args.run,cfgfile=args.cfgfile)
 myMPIrunner.set_maxEventsPerNode(args.max_events)
 myMPIrunner.set_x_axes(args.x_axes)
 # other choices are (for CXI): CXI:INS:CLC:DIAT1 (transmission first harmonic)
@@ -52,6 +58,13 @@ myMPIrunner.set_x_axes(args.x_axes)
 #                              CXI:INS:CLC:DIAT3 (3rd harmonic)
 
 # add some standard stuff that other event processors may use
+if args.cspad_histos:
+    # e.g. to run:
+    # $> mpirun -n 6 python -i launcher.py CXI/cxig1515 47 --cfgfile /reg/neh/home/justing/dev/LCLS-data-summary/data_summary/evplib/cspad_ndarray.cfg --cspad-histos -M 200
+    import psana
+    myMPIrunner.add_event_process( data_summary.cspadhisto()                )
+    myMPIrunner.subjobs[-1].set_stuff('DetInfo(CxiDs1.0:Cspad.0)' ,psana.ndarray_float64_3, in_report='analysis',in_report_title='Ds1 Histograms')
+
 myMPIrunner.add_event_process( data_summary.counter()                       )
 myMPIrunner.add_event_process( data_summary.evr()                           )
 myMPIrunner.add_event_process( data_summary.time_fiducials()                )
