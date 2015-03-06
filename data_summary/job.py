@@ -120,11 +120,16 @@ class job(object):
         self.maxEventsPerNode = n
         return
 
-    def set_datasource(self,exp=None,run=None):
+    def set_datasource(self,exp=None,run=None,cfgfile=None):
         self.exp = exp
         self.run = run
         instr, thisexp = exp.split('/')
         self.set_outputdir(os.path.join( self.baseoutputdir ,'{:}_run{:0.0f}'.format(thisexp,run)))
+
+        if cfgfile is not None:
+            self.cfgfile = cfgfile
+            self.logger.info('setting cfg file to {:}'.format(self.cfgfile))
+            psana.setConfigFile(self.cfgfile)
 
         self.logger.info('connecting to data source')
         self.ds = psana.DataSource('exp={:}:run={:0.0f}:idx'.format(exp,run))
