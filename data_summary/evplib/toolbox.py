@@ -266,7 +266,7 @@ class myhist(object):
             histofall.maxval = max(allmaxs)
             return histofall
 
-    def mksteps(self):
+    def mksteps(self): # use the external mksteps function just below
         self.Xsteps, self.Ysteps = [], [0,]
         for x,y in zip(self.edges,  self.binentries):
             self.Xsteps.append(x)
@@ -274,6 +274,15 @@ class myhist(object):
             self.Ysteps.append(y)
             self.Ysteps.append(y)
         return self.Xsteps, self.Ysteps
+
+def mksteps(edges,binentries,startval=0.0):
+    Xsteps, Ysteps = [], [startval,]
+    for x,y in zip(edges,  binentries):
+        Xsteps.append(x)
+        Xsteps.append(x)
+        Ysteps.append(y)
+        Ysteps.append(y)
+    return Xsteps, Ysteps
 
 if __name__ == "__main__":
     import jutils
