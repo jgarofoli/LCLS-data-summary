@@ -208,10 +208,10 @@ class cspadhisto(event_process.event_process):
                 self.output['figures']['histos_{:0.0f}'.format(i)]['png'] = os.path.join( self.parent.output_dir, 'figure_cspad-histo-{:0.0f}.png'.format(i) )
 
             for i, fig in enumerate(self.merged_histograms._auxfigs) :
-                title = fig.get_axex()[0].get_title()
-                self.output['figures']['aux_{:}'.foramt(title)] = {}
+                title = fig.get_axes()[0].get_title()
+                self.output['figures']['aux_{:}'.format(title)] = {}
                 fig.savefig(os.path.join( self.parent.output_dir, 'figure_cspad-aux-{:}.png'.format(title) ), dpi=600)
-                self.output['figures']['auxs_{:}'.format(title)]['png'] = os.path.join( self.parent.output_dir, 'figure_cspad-aux-{:}.png'.format(title) )
+                self.output['figures']['aux_{:}'.format(title)]['png'] = os.path.join( self.parent.output_dir, 'figure_cspad-aux-{:}.png'.format(title) )
 
             self.parent.output.append(self.output)
 
