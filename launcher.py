@@ -64,6 +64,8 @@ if args.cspad_histos:
     import psana
     myMPIrunner.add_event_process( data_summary.cspadhisto()                )
     myMPIrunner.subjobs[-1].set_stuff('DetInfo(CxiDs1.0:Cspad.0)' ,psana.ndarray_float64_3, in_report='analysis',in_report_title='Ds1 Histograms')
+    myMPIrunner.add_event_process( data_summary.cspadhisto()                )
+    myMPIrunner.subjobs[-1].set_stuff('DetInfo(CxiDs2.0:Cspad.0)' ,psana.ndarray_float64_3, in_report='analysis',in_report_title='Ds2 Histograms')
 
 myMPIrunner.add_event_process( data_summary.counter()                       )
 myMPIrunner.add_event_process( data_summary.evr()                           )
