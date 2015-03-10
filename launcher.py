@@ -2,7 +2,6 @@ import argparse
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot
-import jutils
 import data_summary
 import os
 
@@ -16,7 +15,7 @@ ps.add_argument("exp",
 ps.add_argument("run",type=int,
         help="run to process, e.g. 111")
 
-ps.add_argument("--max-events-per-node","-M",type=int,default=500,dest='max_events',
+ps.add_argument("--max-events-per-node","-M",type=int,default=5000,dest='max_events',
         help="maximum events to process per node")
 
 ps.add_argument("--plot-vs","-X",action='append',default=['time',], dest="x_axes",
