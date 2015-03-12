@@ -25,7 +25,7 @@ ps.add_argument("--verbose", '-v', action='count', default=4, dest="verbosity",
         help="verbosity level of logging, default is 4 (INFO), choices are 1-5 (CRITICAL, ERROR, WARNING, INFO, DEBUG), can pass -v multiple times")
 
 ps.add_argument("--xkcd", "-x", action="store_true", default=False, dest="xkcd",
-        help="use XKCD plot sytle")
+        help="use XKCD plot style")
 
 ps.add_argument("--base-output-dir", "-O", default=os.path.expanduser('~/data-summary/'), dest="baseoutputdir",
         help="set output folder for reports")
