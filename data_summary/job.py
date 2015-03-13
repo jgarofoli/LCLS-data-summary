@@ -2,12 +2,12 @@ from mpi4py import MPI
 import logging
 import os
 import sys
-import output_html
 import psana
 import time
 import math
-import packunpack as pup
+import evplib.packunpack as pup
 import hashlib
+import pprint
 
 __version__ = 0.2
 
@@ -24,6 +24,7 @@ class job(object):
         self.shared = {}
         self.output = []
         self.output_dir = None
+        self._output_dir_base = os.path.expanduser('~/data-summary')
         self.gathered_output = []
         self.previous_versions = []
         self.x_axes = ['time',]
@@ -31,7 +32,22 @@ class job(object):
         self.start_time = time.time()
         self.logger.info('start time is {:}'.format(self.start_time))
         self.eventN = 0
+        self.count = 0
         return
+
+    @property
+    def baseoutputdir(self):
+        return self._output_dir_base
+
+    @baseoutputdir.setter
+    def baseoutputdir(self,value):
+        self._output_dir_base = value
+        return
+
+    @baseoutputdir.getter
+    def baseoutputdir(self):
+        return self._output_dir_base
+
 
     def smart_rename(self,out):
         if out == './':
@@ -40,32 +56,30 @@ class job(object):
             out = out[:-1]
         ii = 0
         while True:
-            if not os.path.isdir(out+'.{:02.0f}'.format(ii)):
-                os.rename(out,out+'.{:02.0f}'.format(ii))
-                self.previous_versions.append( [out+'.{:02.0f}'.format(ii),] )
-                if os.path.isdir(out+'.{:02.0f}'.format(ii)) and os.path.isfile( out+'.{:02.0f}'.format(ii) +'/report.html'):
-                    self.previous_versions[-1].append( time.ctime( os.path.getctime(  out+'.{:02.0f}'.format(ii) +'/report.html' ) ) )
-                else: 
-                    self.previous_versions[-1].append( None )
-                break
-            else:
+            self.logger.info('checking if ({:}) exists ({:})'.format( out+'.{:02.0f}'.format(ii),os.path.isdir(out+'.{:02.0f}'.format(ii))))
+            if os.path.isdir(out+'.{:02.0f}'.format(ii)):
                 self.previous_versions.append( [out+'.{:02.0f}'.format(ii),] )
                 if os.path.isdir(out+'.{:02.0f}'.format(ii)) and os.path.isfile( out+'.{:02.0f}'.format(ii) +'/report.html'):
                     self.previous_versions[-1].append( time.ctime( os.path.getctime(  out+'.{:02.0f}'.format(ii) +'/report.html' ) ) )
                 else: 
                     self.previous_versions[-1].append( None )
                 ii += 1
-                continue
+            else : 
+                break
+        self.output_dir_orig = self.output_dir
+        self.output_dir = self.output_dir+'.{:02.0f}'.format(ii)
+        self.logger.info('setting output dir to {:}'.format(self.output_dir))
+        os.makedirs(self.output_dir)
+        if os.path.exists( self.output_dir_orig + '.latest' ):
+            os.unlink( self.output_dir_orig + '.latest' ) # remove the previous symlink
+        os.symlink( self.output_dir, self.output_dir_orig + '.latest') # make a new symlink
         return
                      
     def set_outputdir(self,*args):
         if len(args) == 1:
             self.output_dir = args[0]
-        if not os.path.isdir(self.output_dir) and self.rank==0:
-            os.mkdir(self.output_dir)
-        elif os.path.isdir(self.output_dir) and self.rank==0:
+        if self.rank==0:
             self.smart_rename(self.output_dir)
-            os.mkdir(self.output_dir)
         self.logger.info('waiting for rank 0 to set up directories..')
         outdir = self.comm.bcast(self.output_dir,root=0) # block and wait for rank0 to finish the directory stuff
         self.logger.info('waiting for rank 0 to set up directories..done')
@@ -110,7 +124,7 @@ class job(object):
         self.exp = exp
         self.run = run
         instr, thisexp = exp.split('/')
-        self.set_outputdir(os.path.join( os.path.abspath('.') ,'{:}_run{:0.0f}'.format(thisexp,run)))
+        self.set_outputdir(os.path.join( self.baseoutputdir ,'{:}_run{:0.0f}'.format(thisexp,run)))
 
         self.logger.info('connecting to data source')
         self.ds = psana.DataSource('exp={:}:run={:0.0f}:idx'.format(exp,run))
@@ -152,8 +166,14 @@ class job(object):
         subjob_data = [sj.describe_self() for sj in self.subjobs]
         self.logger.info('subjobs at end: {:}'.format(subjob_data))
 
-        #self.gathered_subjobs = self.comm.gather( pup.pack(subjob_data) , root=0 )
-        #if self.rank == 0:
+        self.gathered_subjobs = self.comm.gather( pup.pack(subjob_data) , root=0 )
+        if self.rank == 0:
+            tftable = [self.gathered_subjobs[0] == gsj for gsj in self.gathered_subjobs]
+            allgood =  not False in tftable
+            self.logger.info('all ranks have identical subjobs: {:}'.format(allgood  ))
+            self.logger.debug('gathered subjobs: \n {:}'.format( pprint.pformat( self.gathered_subjobs) ) )
+            if not allgood:
+                self.logger.error.info('subjobs matching to sj 0: {:}'.format(repr(tftable)))
         #    self.scattered_subjobs = self.check_subjobs( self.gathered_subjobs[0] )
         #else:
         #    self.scattered_subjobs = None
@@ -185,46 +205,65 @@ class job(object):
 
 
         for sj in self.subjobs:
-            sj.beginJob()
+            try:
+                sj.beginJob()
+            except Exception as e:
+                self.logger.error('some error at beginJob step!! {:}'.format(e) )
 
-        for run in self.ds.runs():
-            times = run.times()
+        for self.thisrun in self.ds.runs():
+            times = self.thisrun.times()
             if self.rank == 0:
                 self.all_times.extend(times)
             mylength = int(math.ceil(float(len(times))/self.size))
             if mylength > self.maxEventsPerNode:
                 mylength = self.maxEventsPerNode
-            mytimes = times[self.rank*mylength:(self.rank+1)*mylength]
+            self.mytimes = times[self.rank*mylength:(self.rank+1)*mylength]
 
-            if mylength > len(mytimes):
-                mylength = len(mytimes)
+            if mylength > len(self.mytimes):
+                mylength = len(self.mytimes)
 
             for sj in self.subjobs:
-                sj.beginRun()
+                try: 
+                    sj.beginRun()
+                except Exception as e:
+                    self.logger.error('some error at beginRun step!! {:}'.format(e) )
                 
             for ii in xrange(mylength):
-                self.evt = run.event(mytimes[ii])
+                self.count += 1
+                self.evt = self.thisrun.event(self.mytimes[ii])
                 self.eventN = ii
                 if self.evt is None:
-                    self.logger.ERROR( "**** event fetch failed ({:}) : rank {:}".format(mytimes[ii],self.rank) )
+                    self.logger.ERROR( "**** event fetch failed ({:}) : rank {:}".format(self.mytimes[ii],self.rank) )
                     continue
 
                 for sj in self.subjobs:
-                    sj.event(self.evt)
+                    try:
+                        sj.event(self.evt)
+                    except Exception as e:
+                        self.logger.error('some error at event step!! {:}'.format(e) )
 
             for sj in self.subjobs:
-                sj.endRun()
+                try:
+                    sj.endRun()
+                except Exception as e:
+                    self.logger.error('some error at endRun step!! {:}'.format(e) )
 
-        self.logger.info( "rank {:} finishing".format( self.rank ) )
+        self.logger.info( "rank {:} finished event processing".format( self.rank ) )
+        self.logger.info( "rank {:} total events processed: {:0.0f}".format( self.rank,self.count ) )
         self.cputotal = time.time() - self.cpustart
 
         # do a pre endJob check to make sure all jobs have the same subjobs (unfinished)
         self.subjobs[5:-1] = sorted(self.subjobs[5:-1]) # sort all jobs except first and last
         self.unify_ranks()
         for sj in self.subjobs:
-            sj.endJob()
+            self.logger.info( 'rank {:} endJob {:}'.format(self.rank, repr(sj) ) )
+            try:
+                sj.endJob()
+            except Exception as e:
+                self.logger.error('some error at endJob step!! {:}'.format(e) )
 
         #logger_flush()
+        self.logger.info('rank {:} done!'.format( self.rank ) )
         for hdlr in self.logger.__dict__['handlers']: # this is a bad way to do this...
             hdlr.flush()
         return

@@ -1,24 +1,51 @@
 import markup
 from markup import oneliner as e
-import os
+import os, sys
 import shutil
+import logging
 
-html_ref_dir = "../html/"
+
+html_ref_dir = os.path.abspath( 
+        os.path.join( 
+            os.path.dirname( 
+                os.path.abspath( 
+                    unicode( __file__ , sys.getfilesystemencoding() ) 
+                    ) 
+                ),
+            "../../html/"
+            )
+        )
+
+hutchcolor = {
+        'AMO': 'blue',
+        'CXI': 'red',
+        'MEC': 'goldenrod',
+        'SXR': 'black',
+        'XCS': 'purple',
+        'XPP': 'green',
+        }
+
 
 class report:
     def __init__(self,*args,**kwargs):
+        self.output_file = 'report.html'
+        self.logger = logging.getLogger(__name__+'.output_html')
+
         self.output_dir = kwargs.get('output_dir','./')
+        self.logger.info('output directory is '+self.output_dir)
         if 'output_dir' in kwargs:
             del kwargs['output_dir']
         cssdir =  os.path.join( self.output_dir, 'css')
         jsdir  =  os.path.join( self.output_dir, 'js')
         if not os.path.isdir( self.output_dir ):
+            self.logger.info('output directory doesn"t exit, making it.')
             os.mkdir( self.output_dir )
         if not os.path.isdir( cssdir ):
             os.mkdir( cssdir )
         if not os.path.isdir( jsdir ):
             os.mkdir( jsdir )
 
+        self.logger.info('copying files...')
         shutil.copy( os.path.join( html_ref_dir, 'css', 'bootstrap.min.css' ), os.path.join( cssdir) )
         shutil.copy( os.path.join( html_ref_dir, 'mine.css' ), os.path.join( cssdir) )
         shutil.copy( os.path.join( html_ref_dir, 'jumbotron-narrow.css' ), self.output_dir  )
@@ -26,9 +53,11 @@ class report:
         shutil.copy( os.path.join( html_ref_dir, 'jquery.min.js' ), os.path.join(jsdir) )
         shutil.copy( os.path.join( html_ref_dir, 'toggler.js' ), os.path.join(jsdir) )
         shutil.copy( os.path.join( html_ref_dir, 'sticky.js' ), os.path.join(jsdir) )
+        self.logger.info('copying files... done.')
 
         self.sections = []
 
+        self.logger.info('instantiating html page object')
         self.page = markup.page()
         self.page.twotags.append('nav')
         self.page.init(**kwargs)
@@ -46,9 +75,11 @@ class report:
         self.page.div.close()
         # footer here?
         self.page.div.close()
+        self.logger.info('finishing html page')
+        self.logger.info('output file is '+os.path.join(self.output_dir,self.output_file))
 
 
-    def _build_header(self,*args):
+    def _build_header(self,*args,**kwargs):
         self.page.div(class_='header')
 
         self.page.nav(class_='navigation')
@@ -57,9 +88,11 @@ class report:
         self.page.li(e.a('Top',href='#top'),class_='active')
         self.page.ul.close()
         self.page.nav.close()
+        
+        hutch = args[0].split('/')[0]
 
-        self.page.h3('CXI Data Summary ' +e.small('{:}, Run {:0.0f}'.format(*args),style='font-family:monospace;')
-                ,class_='text-muted',style='color: red;')
+        self.page.h3('{:} Data Summary '.format(hutch) +e.small('{:}, Run {:0.0f}'.format(*args),style='font-family:monospace;')
+                ,class_='text-muted',style='color: {:};'.format( hutchcolor.get(hutch, 'gray') ))
 
         self.page.div.close()
 
@@ -68,7 +101,7 @@ class report:
         self.page.div(class_='jumbotron')
         self.page.h1(args[0],style='font-family:monospace;')
         self.page.p('Run {:0.0f}'.format(args[1]),class_='lead')
-        self.page.p('Other Information Goes Here. Take advantage of tool tips.',style='font-size: 14px;')
+        #self.page.p('Other Information Goes Here. Take advantage of tool tips.',style='font-size: 14px;')
         self.page.div.close()
 
     def start_block(self,title,id=None,class_=""):
@@ -130,7 +163,7 @@ class report:
 
     def myprint(self,tofile=False):
         if tofile:
-            outfile = open( os.path.join( self.output_dir, 'report.html' ), 'w' )
+            outfile = open( os.path.join( self.output_dir, self.output_file ), 'w' )
             outfile.write(self.page(escape=False))
             outfile.close()
         else:
@@ -151,7 +184,7 @@ def mk_table(dd):
         pg.tr()
         pg.td(kk)
         for jj in sorted(dd[kk]):
-            pg.td(dd[kk][jj])
+            pg.td( '{:0.4f}'.format(dd[kk][jj]))
         pg.tr.close()
     pg.table.close()
     return(pg)
