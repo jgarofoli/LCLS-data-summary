@@ -8,6 +8,8 @@ import math
 import packunpack as pup
 import hashlib
 import pprint
+import tarfile
+import glob
 
 __version__ = 0.2
 
@@ -95,6 +97,8 @@ class job(object):
         self.logger.addHandler( self.logger_fh )
         self.logger.info( "output directory is "+self.output_dir )
         self.version_info()
+        if self.rank==0:
+            self.package_python()
         return
 
     def version_info(self):
@@ -114,6 +118,17 @@ class job(object):
 
         os.path.walk( thisdir, myfun, None)
 
+        return
+
+    def package_python(self):
+        self.logger.info("opening tar file for datasummary code")
+        thisdir = os.path.dirname( os.path.abspath( unicode( __file__,sys.getfilesystemencoding() ) ) )
+        tar = tarfile.open(name="datasummary.tgz",mode="w:gz",dereference=True)
+        for f in glob.glob(os.path.join(thisdir,"*.py")):
+            self.logger.info("taring file: {:}".format(f))
+            tar.add(f)
+        self.logger.info("closing tar file")
+        tar.close()
         return
 
     def set_maxEventsPerNode(self,n):
