@@ -8,14 +8,40 @@
 #
 #------------------------------------------------------------------------
 
-import DataSummary as data_summary
+import os, sys
+import unittest
 
-myMPIrunner = data_summary.job()
+outdir =  '/tmp/data-summary-test'
 
-myMPIrunner.baseoutputdir = '/tmp/data-summary-test'
-myMPIrunner.set_datasource(exp='CXI/cxie9214',run=63,srcdir='/reg/g/psdm/data_test/multifile/test_012_cxie9214')
-myMPIrunner.set_maxEventsPerNode(10)
-myMPIrunner.add_event_process( data_summary.counter()                       )
-myMPIrunner.add_event_process( data_summary.store_report_results()          )
-myMPIrunner.add_event_process( data_summary.build_html()                    ) 
-myMPIrunner.dojob()
+
+class mytest( unittest.TestCase ) :
+    def setUp(self) :
+        # do nothing
+        return
+
+    def tearDown(self) :
+        # remove the /tmp/data-summary-test directory
+        import shutil
+        shutil.rmtree(outdir)
+        return
+    
+    def test_datasummary(self) :
+
+        import DataSummary as data_summary
+        data_summary.set_logger_level("ERROR")
+        myMPIrunner = data_summary.job()
+        myMPIrunner.baseoutputdir = outdir
+        myMPIrunner.set_datasource(exp='CXI/cxie9214',run=63,srcdir='/reg/g/psdm/data_test/multifile/test_012_cxie9214')
+        myMPIrunner.set_maxEventsPerNode(10)
+        myMPIrunner.add_event_process( data_summary.counter()                       )
+        myMPIrunner.add_event_process( data_summary.store_report_results()          )
+        myMPIrunner.add_event_process( data_summary.build_html()                    ) 
+        myMPIrunner.dojob()
+
+        # check for output
+        self.assertTrue( os.path.isfile( os.path.join( myMPIrunner.output_dir,'report.html') ) ) 
+
+
+if __name__ == "__main__":
+    unittest.main()
+
