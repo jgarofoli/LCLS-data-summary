@@ -135,17 +135,24 @@ class job(object):
         self.maxEventsPerNode = n
         return
 
-    def set_datasource(self,exp=None,run=None):
+    def set_datasource(self,exp=None,run=None,srcdir=None):
         self.exp = exp
         self.run = run
+        self.srcdir = srcdir
         instr, thisexp = exp.split('/')
         self.set_outputdir(os.path.join( self.baseoutputdir ,'{:}_run{:0.0f}'.format(thisexp,run)))
 
         self.logger.info('connecting to data source')
-        self.ds = psana.DataSource('exp={:}:run={:0.0f}:idx'.format(exp,run))
+        if srcdir is not None :
+            self.ds = psana.DataSource('exp={:}:run={:0.0f}:dir={:}:idx'.format(exp,run,srcdir))
+        else :
+            self.ds = psana.DataSource('exp={:}:run={:0.0f}:idx'.format(exp,run))
         if self.ds.empty():
             self.logger.error('data source is EMPTY!')
-        self.logger.info('preparing to analyze {:} run {:}'.format(exp,run))
+        if srcdir is not None :
+            self.logger.info('preparing to analyze {:} run {:} dir {:}'.format(exp,run,srcdir))
+        else :
+            self.logger.info('preparing to analyze {:} run {:}'.format(exp,run))
         return
 
     def set_x_axes(self,xaxes):

@@ -1,0 +1,21 @@
+#!@PYTHON@
+#--------------------------------------------------------------------------
+# File and Version Information:
+#  $Id: $
+#
+# Description:
+#  Script data-summary-tool
+#
+#------------------------------------------------------------------------
+
+import DataSummary as data_summary
+
+myMPIrunner = data_summary.job()
+
+myMPIrunner.baseoutputdir = '/tmp/data-summary-test'
+myMPIrunner.set_datasource(exp='CXI/cxie9214',run=63,srcdir='/reg/g/psdm/data_test/multifile/test_012_cxie9214')
+myMPIrunner.set_maxEventsPerNode(10)
+myMPIrunner.add_event_process( data_summary.counter()                       )
+myMPIrunner.add_event_process( data_summary.store_report_results()          )
+myMPIrunner.add_event_process( data_summary.build_html()                    ) 
+myMPIrunner.dojob()
