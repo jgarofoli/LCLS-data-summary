@@ -45,6 +45,23 @@ class event_process(object):
         # that can be used to reproduce this instance (minus the data)
         return (str(self.__class__).split('.')[-1].replace("'>",""), self.replicate_info() )
 
+    def reduce(self,ranks,root=None,tag=None):
+        self.gathered =[]
+        if root is None and tag is None:
+            # do your own singular reduction
+            self.gathered.append( self.vals ) # replace vals with something appropriate
+        elif root == rank and tag is not None:
+            # recieve from the other guys
+            for r in ranks:
+                if r == rank:
+                    self.gathered.append( self.vals ) # replace vals with something appropriate
+                else :
+                    self.gathered.append( comm.recv( source=r, tag=tag) ) # replace vals with something appropriate
+        elif root != rank and tag is not None:
+            # send to the root
+            comm.send( self.vals, dest=root, tag=tag ) # replace vals with something appropriate
+        return
+
 #    def beginStep(self):
 #        return
 #    def endStep(self):
