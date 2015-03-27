@@ -10,6 +10,7 @@ import hashlib
 import pprint
 import tarfile
 import glob
+import random
 
 __version__ = 0.2
 
@@ -21,6 +22,9 @@ class job(object):
         self.comm = MPI.COMM_WORLD
         self.rank = self.comm.Get_rank()
         self.size = self.comm.Get_size()
+        self._reducer_rank_selector = random.Random(1234) # this is the same amongst all ranks so they
+                                                          # all choose the same reducer rank
+        self._reducer_rank = {}
         self.maxEventsPerNode = 5000
         self.all_times = []
         self.shared = {}
@@ -90,6 +94,7 @@ class job(object):
             self.logger.info('changing directory to {:} (output_dir)'.format(self.output_dir))
         else:
             os.chdir(outdir)
+            self.output_dir = outdir
             self.logger.info('changing directory to {:} (outdir)'.format(outdir))
         self.logger_fh = logging.FileHandler('log_{:0.0f}.log'.format(self.rank))
         self.logger_fh.setLevel(logging.DEBUG)
@@ -185,17 +190,17 @@ class job(object):
         return
 
     def unify_ranks(self):
-        subjob_data = [sj.describe_self() for sj in self.subjobs]
-        self.logger.info('subjobs at end: {:}'.format(subjob_data))
+        #subjob_data = [sj.describe_self() for sj in self.subjobs]
+        #self.logger.info('subjobs at end: {:}'.format(subjob_data))
 
-        self.gathered_subjobs = self.comm.gather( pup.pack(subjob_data) , root=0 )
-        if self.rank == 0:
-            tftable = [self.gathered_subjobs[0] == gsj for gsj in self.gathered_subjobs]
-            allgood =  not False in tftable
-            self.logger.info('all ranks have identical subjobs: {:}'.format(allgood  ))
-            self.logger.debug('gathered subjobs: \n {:}'.format( pprint.pformat( self.gathered_subjobs) ) )
-            if not allgood:
-                self.logger.error.info('subjobs matching to sj 0: {:}'.format(repr(tftable)))
+        #self.gathered_subjobs = self.comm.allgather( pup.pack(subjob_data) , root=0 )
+        #if self.rank == 0:
+        #    tftable = [self.gathered_subjobs[0] == gsj for gsj in self.gathered_subjobs]
+        #    allgood =  not False in tftable
+        #    self.logger.info('all ranks have identical subjobs: {:}'.format(allgood  ))
+        #    self.logger.debug('gathered subjobs: \n {:}'.format( pprint.pformat( self.gathered_subjobs) ) )
+        #    if not allgood:
+        #        self.logger.error.info('subjobs matching to sj 0: {:}'.format(repr(tftable)))
         #    self.scattered_subjobs = self.check_subjobs( self.gathered_subjobs[0] )
         #else:
         #    self.scattered_subjobs = None
@@ -203,6 +208,34 @@ class job(object):
         ## instantiate the necessary subjobs in the right order (or reorder them, or whatever)
         ## and update the list of subjobs such that they are identical across all ranks.
         #self.update_subjobs_before_endJob()
+
+        # make a dictionary of the id:sj
+        self.mymap = {(sj.__class__.__name__, repr(sj.describe_self()) ):sj for sj in self.subjobs}
+
+        # get all the other ranks subjobs identifiers to all the ranks
+        self.reduced_sj_name_content_pairs = self.comm.allgather(self.mymap.keys())
+
+        if self.rank == 0:
+            self.logger.info( "the data processors that each rank has" )
+            self.logger.info( pprint.pformat( self.reduced_sj_name_content_pairs, width=120 )) # for convenience
+
+        self.dmap = {} # dmap contains the mapping id:list_of_ranks_with_this_id
+
+        for ii,rj in enumerate(self.reduced_sj_name_content_pairs) :
+            for nn in rj:
+                if nn not in self.dmap:
+                    self.dmap[nn] = []
+                self.dmap[nn].append(ii) # fill up dmap
+
+        # everyone has this information, so everyone knows what needs to be done
+        if self.rank == 0:
+            self.logger.info( "data reduction org chart" )
+
+        for nn in sorted(self.dmap):   # a distributed reduction approach
+            # don't always have rank 0 do the reduction, so this is stressed
+            self._reducer_rank[nn] = self._reducer_rank_selector.choice(self.dmap[nn]) 
+            if self.rank == 0:
+                self.logger.info( "  {:} should reduce {:15s} from {:}".format(self._reducer_rank[nn], nn, self.dmap[nn] ) )
         return
 
     def gather_output(self):
@@ -279,10 +312,11 @@ class job(object):
         self.unify_ranks()
         for sj in self.subjobs:
             self.logger.info( 'rank {:} endJob {:}'.format(self.rank, repr(sj) ) )
+            self.logger.info( '   --- rank {:} should send to {:} ({:})'.format(self.rank, self._reducer_rank[(sj.__class__.__name__, repr( sj.describe_self() ))], sj.__class__.__name__ ) )
             try:
                 sj.endJob()
             except Exception as e:
-                self.logger.error('some error at endJob step!! {:}'.format(e) )
+                self.logger.error('{:} some error at endJob step!! {:}'.format(sj.__class__.__name__,e) )
 
         #logger_flush()
         self.logger.info('rank {:} done!'.format( self.rank ) )
