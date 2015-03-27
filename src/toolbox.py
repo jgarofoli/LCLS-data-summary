@@ -151,9 +151,24 @@ class mytrend(object):
     def getstds(self):
         return [ ii.std for ii in self.trend_periods ]
 
-    def reduce(self,comm,reducer_rank):
+    def reduce(self,comm,reducer_rank=None,tag=None):
+        self.gathered =[]
+        if reducer_rank is None and tag is None:
+            # do your own singular reduction
+            self.gathered.append( self.trend_periods ) # replace vals with something appropriate
+        elif reducer_rank == comm.Get_rank() and tag is not None:
+            # recieve from the other guys
+            for r in xrange(comm.Get_size()):
+                if r == reducer_rank:
+                    self.gathered.append( self.trend_periods ) # replace vals with something appropriate
+                else :
+                    self.gathered.append( comm.recv( source=r, tag=tag) ) # replace vals with something appropriate
+        elif reducer_rank != comm.Get_rank() and tag is not None:
+            # send to the root
+            comm.send( self.trend_periods, dest=reducer_rank, tag=tag ) # replace vals with something appropriate
+
         # the hard part?
-        self.gathered = comm.gather( self.trend_periods, root=reducer_rank) 
+        #self.gathered = comm.gather( self.trend_periods, root=reducer_rank) 
 
         if comm.Get_rank() == reducer_rank:
             reduced_trend = mytrend(self.period_window)
@@ -264,6 +279,48 @@ class myhist(object):
             histofall.set_edges_entries(self.edges,reduced_entries)
             histofall.minval = min(allmins)
             histofall.maxval = max(allmaxs)
+            return histofall
+
+    def reduce(self,comm,reducer_rank=None,tag=None):
+        self.gathered = []
+        self.allmins = []
+        self.allmaxs = []
+
+        if reducer_rank is None and tag is None:
+            # do your own singular reduction
+            self.gathered.append( self.binentries ) # replace vals with something appropriate
+            self.allmins.append( self.minval )
+            self.allmaxs.append( self.maxval )
+        elif reducer_rank == comm.Get_rank() and tag is not None:
+            # recieve from the other guys
+            for r in xrange(comm.Get_size()):
+                if r == reducer_rank:
+                    self.gathered.append( self.binentries ) # replace vals with something appropriate
+                    self.allmins.append( self.minval )
+                    self.allmaxs.append( self.maxval )
+                else :
+                    #self.logger.info('myhist: {:0.0f} receive from {:0.0f}'.format(comm.Get_rank(), reducer_rank) )
+                    self.gathered.append( comm.recv( source=r, tag=tag) ) # replace vals with something appropriate
+                    self.allmins.append( comm.recv( source=r, tag=tag+1) )
+                    self.allmaxs.append( comm.recv( source=r, tag=tag+2) )
+        elif reducer_rank != comm.Get_rank() and tag is not None:
+            # send to the root
+            #self.logger.info('myhist: {:0.0f} send to {:0.0f}'.format(comm.Get_rank(), reducer_rank) )
+            comm.send( self.binentries, dest=reducer_rank, tag=tag ) # replace vals with something appropriate
+            comm.send( self.minval,     dest=reducer_rank, tag=tag+1)
+            comm.send( self.maxval,     dest=reducer_rank, tag=tag+2)
+
+        # the hard part?
+        #self.gathered = comm.gather( self.trend_periods, root=reducer_rank) 
+
+        if comm.Get_rank() == reducer_rank:
+            reduced_entries = numpy.zeros_like( self.binentries )
+            for gath in self.gathered:
+                reduced_entries += gath
+            histofall = myhist(self.nbins, self.minrange, self.maxrange)
+            histofall.set_edges_entries(self.edges, reduced_entries )
+            histofall.minval = min(self.allmins)
+            histofall.maxval = min(self.allmaxs)
             return histofall
 
     def mksteps(self):

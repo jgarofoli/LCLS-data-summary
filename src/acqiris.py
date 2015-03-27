@@ -49,10 +49,9 @@ class acqiris(event_process.event_process):
         self.reduced_data = {}
         for evr in self.data:
             self.logger.info('mpi reducing {:}'.format(evr))
-            self.reduced_data[evr] = self.data[evr].reduce(self.parent.comm,self.reducer_rank)
+            self.reduced_data[evr] = self.data[evr].reduce(self.parent.comm,reducer_rank=self.parent._reducer_rank[(self.__class__.__name__, repr( self.describe_self() ) )],tag=11)
 
-
-        if self.parent.rank == self.reducer_rank:
+        if self.parent.rank == self.parent._reducer_rank[(self.__class__.__name__, repr( self.describe_self() ) )]:
             fig = pylab.figure()
             for evr in sorted(self.reduced_data):
                 fig.clear()
@@ -77,6 +76,7 @@ class acqiris(event_process.event_process):
                 #self.output['figures'][evr]['pdf'] = os.path.join( self.parent.output_dir, 'figure_evr_{:}.pdf'.format( evr ) )
                 pylab.savefig( os.path.join( self.parent.output_dir, 'figure_evr_{:}.png'.format( evr ) ) )
                 self.output['figures'][evr]['png'] = os.path.join( self.parent.output_dir, 'figure_evr_{:}.png'.format( evr ) )
+                self.logger.info( 'figure saved: {}'.format( self.output['figures'][evr]['png']) )
             del fig
             self.parent.output.append(self.output)
         return
