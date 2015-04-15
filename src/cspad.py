@@ -72,15 +72,15 @@ class cspad(event_process.event_process):
             self.flat = self.avg.flatten()
             pylab.clim(self.flat.mean()-2.*self.flat.std(),self.flat.mean()+2.*self.flat.std())
             pylab.title('CSPAD average of {:} frames'.format(self.nframes))
-            pylab.savefig( os.path.join( self.parent.output_dir, 'figure_cspad.png' ))
-            self.output['figures']['mean']['png'] = os.path.join( self.parent.output_dir, 'figure_cspad.png')
+            pylab.savefig( os.path.join( self.output_dir, 'figure_cspad.png' ))
+            self.output['figures']['mean']['png'] = os.path.join( self.output_dir, 'figure_cspad.png')
 
             fig.clear()
             pylab.hist(self.flat,1000)
             pylab.xlim(self.flat.mean()-2.*self.flat.std(),self.flat.mean()+2.*self.flat.std())
             pylab.title('histogram')
-            pylab.savefig( os.path.join( self.parent.output_dir, 'figure_cspad_hist.png' ))
-            self.output['figures']['mean_hist']['png'] = os.path.join( self.parent.output_dir, 'figure_cspad_hist.png')
+            pylab.savefig( os.path.join( self.output_dir, 'figure_cspad_hist.png' ))
+            self.output['figures']['mean_hist']['png'] = os.path.join( self.output_dir, 'figure_cspad_hist.png')
 
             del fig
             self.parent.output.append(self.output)

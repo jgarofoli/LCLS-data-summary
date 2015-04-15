@@ -79,8 +79,8 @@ class epics_trend(event_process.event_process):
                 pylab.title(chan)
                 pylab.xlabel('time [sec]')
                 pylab.ylabel('value [min/mean/max]')
-                pylab.savefig( os.path.join( self.parent.output_dir, 'figure_trend_{:}.png'.format(chan.replace(':','_')) ))
-                self.output['figures'][chan]['png'] = os.path.join( self.parent.output_dir, 'figure_trend_{:}.png'.format( chan.replace(':','_') ))
+                pylab.savefig( os.path.join( self.output_dir, 'figure_trend_{:}.png'.format(chan.replace(':','_')) ))
+                self.output['figures'][chan]['png'] = os.path.join( self.output_dir, 'figure_trend_{:}.png'.format( chan.replace(':','_') ))
                 # finish this section
             del fig
             self.parent.output.append(self.output)

@@ -64,8 +64,8 @@ class simple_stats(event_process.event_process):
                 pylab.ylabel('count [per bin]')
                 pylab.xlim( self.histograms[attr].minrange, self.histograms[attr].maxrange )
                 pylab.ylim( 0 , max(self.reduced_histograms[attr].binentries)*1.1 )
-                pylab.savefig( os.path.join( self.parent.output_dir, 'figure_{:}.png'.format( attr ) ))
-                self.output['figures'][attr]['png'] = os.path.join( self.parent.output_dir, 'figure_{:}.png'.format( attr ))
+                pylab.savefig( os.path.join( self.output_dir, 'figure_{:}.png'.format( attr ) ))
+                self.output['figures'][attr]['png'] = os.path.join( self.output_dir, 'figure_{:}.png'.format( attr ))
 
                 self.output['table'][attr] = {}
                 self.output['table'][attr]['Mean'] = self.reduced_histograms[attr].mean()

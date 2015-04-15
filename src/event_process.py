@@ -1,4 +1,5 @@
 import logging
+import os
 
 
 # copied from psana/Module.h
@@ -13,12 +14,31 @@ class event_process(object):
         self.output       = event_process_output()
         self.reducer_rank = 0
         self.logger       = logging.getLogger(__name__+'.default_logger')
+
+        self._output_dir_id = repr(id(self))
         return
 
     def set_parent(self,parent):
         self.parent = parent
         #if 'r{:}'.format(self.parent.rank) not in self.logger.name:
             #self.logger.name = '{:}.r{:}'.format(self.logger.name,self.parent.rank)
+
+    @property
+    def output_dir(self):
+        if not hasattr(self,'_output_dir_id'):
+            self._output_dir_id = repr(id(self))
+        outdir = os.path.join(self.parent.output_dir, self._output_dir_id )
+        if not os.path.isdir(outdir):
+            os.makedirs(outdir)
+        return outdir
+
+    @output_dir.setter
+    def output_dir(self,val):
+        self._output_dir_id = repr(val)
+        outdir = os.path.join(self.parent.output_dir, self._output_dir_id )
+        if not os.path.isdir(outdir):
+            os.makedirs(outdir)
+        return 
         
 
     def beginJob(self):

@@ -74,8 +74,8 @@ class acqiris(event_process.event_process):
                 pylab.ylim( 0 , max(self.reduced_data[evr].binentries)*1.1 )
                 #pylab.savefig( os.path.join( self.parent.output_dir, 'figure_evr_{:}.pdf'.format( evr ) ) )
                 #self.output['figures'][evr]['pdf'] = os.path.join( self.parent.output_dir, 'figure_evr_{:}.pdf'.format( evr ) )
-                pylab.savefig( os.path.join( self.parent.output_dir, 'figure_evr_{:}.png'.format( evr ) ) )
-                self.output['figures'][evr]['png'] = os.path.join( self.parent.output_dir, 'figure_evr_{:}.png'.format( evr ) )
+                pylab.savefig( os.path.join( self.output_dir, 'figure_evr_{:}.png'.format( evr ) ) )
+                self.output['figures'][evr]['png'] = os.path.join( self.output_dir, 'figure_evr_{:}.png'.format( evr ) )
                 self.logger.info( 'figure saved: {}'.format( self.output['figures'][evr]['png']) )
             del fig
             self.parent.output.append(self.output)

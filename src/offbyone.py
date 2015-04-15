@@ -160,9 +160,9 @@ class offbyone(event_process.event_process):
                     plt.ylabel('response [arb.]',fontsize=8)
                 if subplotnum==8 or i==len(results.keys())-1:
                     pdf.savefig()
-                    pylab.savefig( os.path.join( self.parent.output_dir, 'figure_offbyone_{:}.png'.format( totalfigs ) ) )
+                    pylab.savefig( os.path.join( self.output_dir, 'figure_offbyone_{:}.png'.format( totalfigs ) ) )
                     self.output['figures'][totalfigs] = {}
-                    self.output['figures'][totalfigs]['png'] = os.path.join( self.parent.output_dir, 'figure_offbyone_{:}.png'.format( totalfigs ) )
+                    self.output['figures'][totalfigs]['png'] = os.path.join( self.output_dir, 'figure_offbyone_{:}.png'.format( totalfigs ) )
                     totalfigs += 1
                     #plt.show()
                     plt.close()
