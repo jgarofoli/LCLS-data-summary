@@ -15,8 +15,6 @@ class event_process(object):
         self.reducer_rank = 0
         self.reduce_ranks = []
         self.logger       = logging.getLogger(__name__+'.default_logger')
-
-        self._output_dir_id = repr(id(self))
         return
 
     def set_parent(self,parent):
