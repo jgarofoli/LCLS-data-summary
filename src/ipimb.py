@@ -64,7 +64,7 @@ class ipimb(event_process.event_process):
         self.reduced_trends = {}
         for chan in self.trends:
             self.logger.info('mpi reducing {:}'.format(chan))
-            self.reduced_trends[chan] = self.trends[chan].reduce(self.parent.comm,self.reducer_rank)
+            self.reduced_trends[chan] = self.trends[chan].reduce(self.parent.comm,reducer_rank=self.reducer_rank,tag=44,ranks=self.reduce_ranks)
 
         if self.parent.rank == self.reducer_rank:
             self.output['text'].append('PVs trended below the fold: <br/>\n<pre>')

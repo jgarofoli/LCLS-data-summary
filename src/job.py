@@ -11,6 +11,7 @@ import pprint
 import tarfile
 import glob
 import random
+import traceback
 
 __version__ = 0.2
 
@@ -264,6 +265,7 @@ class job(object):
                 sj.beginJob()
             except Exception as e:
                 self.logger.error('some error at beginJob step!! {:}'.format(e) )
+                self.logger.error(traceback.format_exc())
 
         for self.thisrun in self.ds.runs():
             times = self.thisrun.times()
@@ -282,6 +284,7 @@ class job(object):
                     sj.beginRun()
                 except Exception as e:
                     self.logger.error('some error at beginRun step!! {:}'.format(e) )
+                    self.logger.error(traceback.format_exc())
                 
             for ii in xrange(mylength):
                 self.count += 1
@@ -296,12 +299,14 @@ class job(object):
                         sj.event(self.evt)
                     except Exception as e:
                         self.logger.error('some error at event step!! {:}'.format(e) )
+                        self.logger.error(traceback.format_exc())
 
             for sj in self.subjobs:
                 try:
                     sj.endRun()
                 except Exception as e:
                     self.logger.error('some error at endRun step!! {:}'.format(e) )
+                    self.logger.error(traceback.format_exc())
 
         self.logger.info( "rank {:} finished event processing".format( self.rank ) )
         self.logger.info( "rank {:} total events processed: {:0.0f}".format( self.rank,self.count ) )
@@ -313,10 +318,14 @@ class job(object):
         for sj in self.subjobs:
             self.logger.info( 'rank {:} endJob {:}'.format(self.rank, repr(sj) ) )
             self.logger.info( '   --- rank {:} should send to {:} ({:})'.format(self.rank, self._reducer_rank[(sj.__class__.__name__, repr( sj.describe_self() ))], sj.__class__.__name__ ) )
+            if sj != self.subjobs[-1]:
+                sj.reducer_rank = self._reducer_rank[(sj.__class__.__name__, repr( sj.describe_self() ))]
+                sj.reduce_ranks = self.dmap[(sj.__class__.__name__, repr( sj.describe_self() ))]
             try:
                 sj.endJob()
             except Exception as e:
                 self.logger.error('{:} some error at endJob step!! {:}'.format(sj.__class__.__name__,e) )
+                self.logger.error(traceback.format_exc())
 
         #logger_flush()
         self.logger.info('rank {:} done!'.format( self.rank ) )

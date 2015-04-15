@@ -2,6 +2,7 @@ from mpi4py import MPI
 import math
 import numpy
 #import logging # MPI doesn't play nicely with logging, it seams
+import logging
 
 class scatter(object):
     def __init__(self,xname,yname):
@@ -151,14 +152,14 @@ class mytrend(object):
     def getstds(self):
         return [ ii.std for ii in self.trend_periods ]
 
-    def reduce(self,comm,reducer_rank=None,tag=None):
+    def reduce(self,comm,ranks=[],reducer_rank=None,tag=None):
         self.gathered =[]
         if reducer_rank is None and tag is None:
             # do your own singular reduction
             self.gathered.append( self.trend_periods ) # replace vals with something appropriate
         elif reducer_rank == comm.Get_rank() and tag is not None:
             # recieve from the other guys
-            for r in xrange(comm.Get_size()):
+            for r in ranks:
                 if r == reducer_rank:
                     self.gathered.append( self.trend_periods ) # replace vals with something appropriate
                 else :
@@ -195,7 +196,7 @@ class myhist(object):
         self.underflow = None
         self.maxval = None
         self.minval = None
-        #self.logger                      = logging.getLogger(__name__+'.myhist')
+        self.logger                      = logging.getLogger(__name__+'.myhist')
         return
 
     def __add__(self,other):
@@ -266,46 +267,46 @@ class myhist(object):
     def std(self):
         return self.rms()
 
-    def reduce(self,comm,reducer_rank):
-        reduced_entries = numpy.zeros_like( self.binentries )
-        comm.Reduce(
-                [self.binentries, MPI.DOUBLE], 
-                [reduced_entries, MPI.DOUBLE],
-                op=MPI.SUM,root=reducer_rank)
-        allmins = comm.gather(self.minval, root=reducer_rank)
-        allmaxs = comm.gather(self.maxval, root=reducer_rank)
-        if comm.Get_rank() == reducer_rank:
-            histofall = myhist(self.nbins,self.minrange,self.maxrange)
-            histofall.set_edges_entries(self.edges,reduced_entries)
-            histofall.minval = min(allmins)
-            histofall.maxval = max(allmaxs)
-            return histofall
+#    def reduce(self,comm,reducer_rank):
+#        reduced_entries = numpy.zeros_like( self.binentries )
+#        comm.Reduce(
+#                [self.binentries, MPI.DOUBLE], 
+#                [reduced_entries, MPI.DOUBLE],
+#                op=MPI.SUM,root=reducer_rank)
+#        allmins = comm.gather(self.minval, root=reducer_rank)
+#        allmaxs = comm.gather(self.maxval, root=reducer_rank)
+#        if comm.Get_rank() == reducer_rank:
+#            histofall = myhist(self.nbins,self.minrange,self.maxrange)
+#            histofall.set_edges_entries(self.edges,reduced_entries)
+#            histofall.minval = min(allmins)
+#            histofall.maxval = max(allmaxs)
+#            return histofall
 
-    def reduce(self,comm,reducer_rank=None,tag=None):
+    def reduce(self,comm,ranks=[],reducer_rank=None,tag=None):
         self.gathered = []
         self.allmins = []
         self.allmaxs = []
 
-        if reducer_rank is None and tag is None:
+        if reducer_rank == comm.Get_rank() and tag is None :
             # do your own singular reduction
             self.gathered.append( self.binentries ) # replace vals with something appropriate
             self.allmins.append( self.minval )
             self.allmaxs.append( self.maxval )
         elif reducer_rank == comm.Get_rank() and tag is not None:
             # recieve from the other guys
-            for r in xrange(comm.Get_size()):
+            for r in ranks:
                 if r == reducer_rank:
                     self.gathered.append( self.binentries ) # replace vals with something appropriate
                     self.allmins.append( self.minval )
                     self.allmaxs.append( self.maxval )
                 else :
-                    #self.logger.info('myhist: {:0.0f} receive from {:0.0f}'.format(comm.Get_rank(), reducer_rank) )
+                    self.logger.info('myhist: {:0.0f} receive from {:0.0f}'.format(comm.Get_rank(), reducer_rank) )
                     self.gathered.append( comm.recv( source=r, tag=tag) ) # replace vals with something appropriate
                     self.allmins.append( comm.recv( source=r, tag=tag+1) )
                     self.allmaxs.append( comm.recv( source=r, tag=tag+2) )
         elif reducer_rank != comm.Get_rank() and tag is not None:
             # send to the root
-            #self.logger.info('myhist: {:0.0f} send to {:0.0f}'.format(comm.Get_rank(), reducer_rank) )
+            self.logger.info('myhist: {:0.0f} send to {:0.0f}'.format(comm.Get_rank(), reducer_rank) )
             comm.send( self.binentries, dest=reducer_rank, tag=tag ) # replace vals with something appropriate
             comm.send( self.minval,     dest=reducer_rank, tag=tag+1)
             comm.send( self.maxval,     dest=reducer_rank, tag=tag+2)

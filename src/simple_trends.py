@@ -49,7 +49,8 @@ class simple_trends(event_process.event_process):
         self.reduced_trends = {}
         for attr in self.dev_attrs:
             self.logger.info('mpi reducing {:}'.format(attr))
-            self.reduced_trends[attr] = self.trends[attr].reduce(self.parent.comm,self.reducer_rank)
+            self.logger.info('reducer_rank={:} ranks={:}'.format(repr(self.reducer_rank),repr(self.reduce_ranks)))
+            self.reduced_trends[attr] = self.trends[attr].reduce(self.parent.comm,ranks=self.reduce_ranks,reducer_rank=self.reducer_rank,tag=34)
 
         if self.parent.rank == self.reducer_rank:
             fig = pylab.figure()

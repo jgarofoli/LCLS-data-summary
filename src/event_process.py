@@ -13,6 +13,7 @@ class event_process(object):
     def __init__(self):
         self.output       = event_process_output()
         self.reducer_rank = 0
+        self.reduce_ranks = []
         self.logger       = logging.getLogger(__name__+'.default_logger')
 
         self._output_dir_id = repr(id(self))
@@ -26,7 +27,7 @@ class event_process(object):
     @property
     def output_dir(self):
         if not hasattr(self,'_output_dir_id'):
-            self._output_dir_id = repr(id(self))
+            self._output_dir_id = repr(id(self)) + '-{:0.0f}'.format(self.parent.comm.Get_rank())
         outdir = os.path.join(self.parent.output_dir, self._output_dir_id )
         if not os.path.isdir(outdir):
             os.makedirs(outdir)
