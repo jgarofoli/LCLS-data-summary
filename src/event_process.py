@@ -1,6 +1,7 @@
 import logging
 import os
 
+__version__ = '00.00.06'
 
 # copied from psana/Module.h
 # https://www.slac.stanford.edu/~gapon/TALKS/2013_Oct_LCLS_UserMeeting/Batch_Psana_Intro_v2.pdf pg 7

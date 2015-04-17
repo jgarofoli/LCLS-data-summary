@@ -6,6 +6,7 @@ import toolbox
 import pylab
 from common import strtype
 
+__version__ = '00.00.06'
 
 class acqiris(event_process.event_process):
     def __init__(self):

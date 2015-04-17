@@ -13,7 +13,7 @@ import glob
 import random
 import traceback
 
-__version__ = 0.2
+__version__ = '00.00.06'
 
 
 class job(object):
