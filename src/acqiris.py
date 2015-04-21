@@ -43,11 +43,12 @@ class acqiris(event_process.event_process):
             self.logger.error('No acqiris found in event {:}'.format(self.parent.eventN))
             return
         #self.logger.debug( 'acqiris traces = {:}'.format(self.raw_traces.data_shape() ))
-        self.trace = list(self.raw_traces.data(0).waveforms()[0]) # or 5? idk
-        self.peak = self.trace.index( max(self.trace) )
+        self.traces = { tr: list(self.raw_traces.data(tr).waveforms()[0]) for tr in xrange( self.raw_traces.data_shape()[0] ) }
+        self.peaks  = { tr: self.traces[tr].index( max(self.traces[tr]) ) for tr in self.traces }
         for evr in self.parent.shared['evr']:
             #print "rank {:} evr {:} peak {:}".format(self.parent.rank, evr, peak )
-            self.data.setdefault( evr, toolbox.myhist(500,0,500)).fill( self.peak )
+            for tr in self.peaks:
+                self.data.setdefault( "{:}-{:0.0f}".format(evr,tr), toolbox.myhist(5000,0,20000)).fill( self.peaks[tr] )
         return
 
     def endJob(self):
@@ -77,7 +78,8 @@ class acqiris(event_process.event_process):
                 pylab.title( 'acqiris arrival bin for evr '+repr(evr) )
                 pylab.xlabel('value')
                 pylab.ylabel('count [per bin]')
-                pylab.xlim(self.histmin,self.histmax)
+                self.logger.info("hist min, hist max: ignored")
+                #pylab.xlim(self.histmin,self.histmax)
                 pylab.ylim( 0 , max(self.reduced_data[evr].binentries)*1.1 )
                 #pylab.savefig( os.path.join( self.parent.output_dir, 'figure_evr_{:}.pdf'.format( evr ) ) )
                 #self.output['figures'][evr]['pdf'] = os.path.join( self.parent.output_dir, 'figure_evr_{:}.pdf'.format( evr ) )
