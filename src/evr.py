@@ -17,7 +17,7 @@ class evr(event_process.event_process):
         return
 
     def event(self,evt):
-        self.raw_evr = evt.get(psana.EvrData.DataV3, self.src)
+        self.raw_evr = evt.get(psana.EvrData.DataV4, self.src)
         if self.raw_evr is None:
             self.evr = []
         else:
