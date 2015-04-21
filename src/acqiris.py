@@ -34,6 +34,10 @@ class acqiris(event_process.event_process):
         return ('set_stuff',args,kwargs)
 
     def event(self,evt):
+        """
+        this should be expanded to look at all traces in general, and specify which ones to look
+        at with the init command
+        """
         self.raw_traces = evt.get(self.dev,self.src)
         if self.raw_traces is None:
             self.logger.error('No acqiris found in event {:}'.format(self.parent.eventN))
